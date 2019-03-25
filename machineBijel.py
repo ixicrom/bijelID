@@ -3,7 +3,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as pl
 import scipy.fftpack as fftim
-#from scikits import learn
 from scipy.misc.pilutil import Image
 import pandas as pd
 import sklearn.neighbors as nn
@@ -103,5 +102,3 @@ knn.fit(x_train, y_train)
 pred=knn.predict(x_test)
 
 #print accuracy_score(y_test, pred)
-
-
