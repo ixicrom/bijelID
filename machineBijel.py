@@ -6,7 +6,9 @@ import scipy.fftpack as fftim
 from scipy.misc.pilutil import Image
 import pandas as pd
 import sklearn.neighbors as nn
-import sklearn.cross_validation as cv
+#import sklearn.cross_validation as cv
+from Tkinter import Tk
+from tkinter.filedialog import askopenfilename
 
 def radial_profile(data,centre):
     y, x = np.indices((data.shape))
@@ -49,8 +51,10 @@ def turnpoints(lst):
 
 
 
+Tk().withdraw()
+datFile = askopenfilename()
 
-exp_Dat = pd.read_csv('M:\PhD\BijelData\Bijel_Data_Cleaner_ToRead.csv') #read in experimental data file
+exp_Dat = pd.read_csv(datFile) #read in experimental data file
 exp_Dat.index=exp_Dat['Sample Number'] #rename rows as sample numbers
 #print(exp_Dat.ix[:5,:5])
 exp_Dat.head()
