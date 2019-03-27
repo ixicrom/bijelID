@@ -118,10 +118,18 @@ x_train, x_test, y_train, y_test=cv.train_test_split(x,y,test_size=0.33, random_
 x_train=x_train.reshape(-1,1)
 x_test=x_test.reshape(-1,1)
 
-knn=nn.KNeighborsClassifier(n_neighbors=11)
+knn=nn.KNeighborsClassifier()
+param_grid={'n_neighbors': np.arange(1,89)}
+knn_gscv = cv.GridSearchCV(knn, param_grid, cv=10)
+knn_gscv.fit(x.reshape(-1,1),y.reshape(-1,1))
+print knn_gscv.best_params_
+print knn_gscv.best_score_
 
-knn.fit(x_train, y_train)
+#knn=nn.KNeighborsClassifier(n_neighbors=11)
+#cv_scores = cv.cross_val_score(knn, x.reshape(-1,1), y.reshape(-1,1), cv=10)
+#print np.mean(cv_scores)
 
-pred=knn.predict(x_test)
-pred
-print accuracy_score(y_test, pred)
+
+#knn.fit(x_train, y_train)
+#pred=knn.predict(x_test)
+#print accuracy_score(y_test, pred)
