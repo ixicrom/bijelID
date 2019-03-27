@@ -6,9 +6,10 @@ import scipy.fftpack as fftim
 from scipy.misc.pilutil import Image
 import pandas as pd
 import sklearn.neighbors as nn
-#import sklearn.cross_validation as cv
-from Tkinter import Tk
-from tkinter.filedialog import askopenfilename
+import sklearn.model_selection as cv
+from sklearn.metrics import accuracy_score
+#from Tkinter import Tk
+#from tkinter.filedialog import askopenfilename
 
 def radial_profile(data,centre):
     y, x = np.indices((data.shape))
@@ -29,14 +30,13 @@ def correlate(x,y):
     return cc
 
 def listTif_nohidden(path):
+    out=[]
     for f in os.listdir(path):
         if not f.startswith('.'):
             if f.endswith('.tif'):
-                yield f
-
-def turningpoints(lst):
-    dx = np.diff(lst)
-    return np.sum(dx[1:] * dx[:-1] < 0)
+                out.append(f)
+                #yield f
+    return out
 
 def turnpoints(lst):
     x=np.array(lst)
@@ -45,27 +45,46 @@ def turnpoints(lst):
     x2=np.concatenate(([x0], x[:-1]))
     diffs=x!=x2
     uniques=x[diffs]
-    #n2=len(uniques)
-    #poss=np.arange(1:n)[diffs]
-    #exaequos=np.concatenate(poss[1:n2],[n+1])-poss-1
+    uniques
+    n2=len(uniques)
+    poss=np.arange(n)[diffs]
+    exaequos=np.concatenate((poss[1:n2],[n+1]))-poss-1
+    #at some point need to add in if statements to catch when things are wrong as with the R package
+    m = n2-2
+    vals=np.concatenate((np.arange(m)+2, np.arange(m)+1, np.arange(m)))
+    ex = np.array(uniques[vals])
+    ex=np.reshape(ex,(-1,m))
+    ex=np.transpose(ex)
+    peaks=[False]
+    pits=[False]
+    for i in range(m):
+        peaks.append(ex[i,1]==max(ex[i,]))
+        pits.append(ex[i,1]==min(ex[i,]))
+    peaks.append(False)
+    pits.append(False)
+    tpts= [a or b for a,b in zip(peaks, pits)]
+    if sum(tpts)==0:
+        tppos=np.nan
+        peaks = [False]*n2
+        pits = [False]*n2
+    else:
+        tppos = (poss+exaequos)[tpts]
+    return tppos
 
 
-
-Tk().withdraw()
-datFile = askopenfilename()
-
+#Tk().withdraw()
+#datFile = askopenfilename()
+datFile=os.path.normpath('/Volumes/PhD/BijelData/Bijel_Data_Cleaner_ToRead.csv')
 exp_Dat = pd.read_csv(datFile) #read in experimental data file
 exp_Dat.index=exp_Dat['Sample Number'] #rename rows as sample numbers
-#print(exp_Dat.ix[:5,:5])
-exp_Dat.head()
+
 
 autocorr_Dat = pd.DataFrame(index=exp_Dat.index, columns=['AutoTurn'])
-
 #calculate autocorrelation of each image
-imageDir='M:\PhD\BijelData\Batch_II_full_resolution_ED_images\TIFs'
-workingDir='M:\PhD\BijelData\Test'
-images=listTif_nohidden('M:\PhD\BijelData\Batch_II_full_resolution_ED_images\TIFs')
-print(images)
+imageDir='/Volumes/PhD/BijelData/Python/TIFs/'
+#workingDir='/Volumes/PhD/BijelData/Test'
+images=listTif_nohidden(imageDir)
+
 for image in images:
     a = Image.open(os.path.join(imageDir,image))
     b = np.asarray(a)
@@ -83,26 +102,26 @@ for image in images:
         #buf = '%s \n' %(str(output[j]))
         #out.write(buf)
 
-    turn=turningpoints(output)
+    turn=turnpoints(output)[1]
 
     sample=image.split("_")[0]
+    #print(sample)
     autocorr_Dat['AutoTurn'][sample] = turn
 
+exp_Dat=pd.concat([exp_Dat, autocorr_Dat['AutoTurn']],axis=1)
 
-exp_Dat=pd.concat([exp_Dat, autocorr_Dat['AutoTurn']])
-print len(autocorr_Dat.index)
-print len(exp_Dat.index)
-
-x=np.array(exp_Dat['AutoTurn'])
-y=np.array(exp_Dat['Bijel'])
+x=np.asarray(exp_Dat['AutoTurn'])
+y=np.asarray(exp_Dat['Bijel'])
 
 
 x_train, x_test, y_train, y_test=cv.train_test_split(x,y,test_size=0.33, random_state=42)
+x_train=x_train.reshape(-1,1)
+x_test=x_test.reshape(-1,1)
 
-knn=nn.KNeighborsClassifier(n_neighbors=19)
+knn=nn.KNeighborsClassifier(n_neighbors=11)
 
 knn.fit(x_train, y_train)
 
 pred=knn.predict(x_test)
-
-#print accuracy_score(y_test, pred)
+pred
+print accuracy_score(y_test, pred)
