@@ -8,6 +8,7 @@ import pandas as pd
 import sklearn.neighbors as nn
 import sklearn.model_selection as cv
 from sklearn.metrics import accuracy_score
+from skimage import io
 #from Tkinter import Tk
 #from tkinter.filedialog import askopenfilename
 
@@ -79,37 +80,32 @@ exp_Dat = pd.read_csv(datFile) #read in experimental data file
 exp_Dat.index=exp_Dat['Sample Number'] #rename rows as sample numbers
 
 
-autocorr_Dat = pd.DataFrame(index=exp_Dat.index, columns=['AutoTurn'])
+autocorr_Dat = pd.DataFrame(index=exp_Dat.index, columns=['AutoTurn', 'AutoTurnPart'])
 #calculate autocorrelation of each image
 imageDir='/Volumes/PhD/BijelData/Python/TIFs/'
 #workingDir='/Volumes/PhD/BijelData/Test'
 images=listTif_nohidden(imageDir)
 
+imChannel=1
+
 for image in images:
-    a = Image.open(os.path.join(imageDir,image))
+    a = io.imread(os.path.join(imageDir,image))[imChannel]
     b = np.asarray(a)
 
     ac3 = correlate(b,b)
 
     autoCorr = (radial_profile(ac3,(b.shape[0]/2,b.shape[1]/2))[:256]/radial_profile(ac3,(b.shape[0]/2.,b.shape[1]/2.))[:256][0]) #256 should be replaced by half image size, i.e. this is for a 512x512 image
 
-    output = autoCorr
-    #txtFile = '%s_autoCorr.txt'%image
-    #graphFile = '%s_autoCorr.png'%image
-
-    #out = open(os.path.join(workingDir, txtFile), 'wb')
-    #for j in range(len(output)):
-        #buf = '%s \n' %(str(output[j]))
-        #out.write(buf)
-
-    turn=turnpoints(output)[1]
+    turn=turnpoints(autoCorr)[1]
 
     sample=image.split("_")[0]
     #print(sample)
-    autocorr_Dat['AutoTurn'][sample] = turn
+    autocorr_Dat['AutoTurnPart'][sample] = turn
 
-exp_Dat=pd.concat([exp_Dat, autocorr_Dat['AutoTurn']],axis=1)
+autocorr_Dat
+exp_Dat=pd.concat([exp_Dat, autocorr_Dat['AutoTurnPart']],axis=1)
 
+exp_Dat.head()
 x=np.asarray(exp_Dat['AutoTurn'])
 y=np.asarray(exp_Dat['Bijel'])
 
@@ -119,17 +115,8 @@ x_train=x_train.reshape(-1,1)
 x_test=x_test.reshape(-1,1)
 
 knn=nn.KNeighborsClassifier()
-param_grid={'n_neighbors': np.arange(1,89)}
+param_grid={'n_neighbors': np.arange(1,69)}
 knn_gscv = cv.GridSearchCV(knn, param_grid, cv=10)
 knn_gscv.fit(x.reshape(-1,1),y.reshape(-1,1))
 print knn_gscv.best_params_
 print knn_gscv.best_score_
-
-#knn=nn.KNeighborsClassifier(n_neighbors=11)
-#cv_scores = cv.cross_val_score(knn, x.reshape(-1,1), y.reshape(-1,1), cv=10)
-#print np.mean(cv_scores)
-
-
-#knn.fit(x_train, y_train)
-#pred=knn.predict(x_test)
-#print accuracy_score(y_test, pred)
