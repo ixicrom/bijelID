@@ -45,7 +45,7 @@ exp_Dat.index=exp_Dat['Sample Number'] #rename rows as sample numbers
 
 autocorr_Dat = pd.DataFrame(index=exp_Dat.index, columns=['AutoTurn', 'AutoTurnPart'])
 imageDir='/Volumes/PhD/BijelData/Python/TIFs/'
-workingDir='/Volumes/PhD/BijelData/Test'
+workingDir='/Volumes/PhD/BijelData/ParticleChannel/'
 images=listTif_nohidden(imageDir)
 
 imChannel=int(input("Which image channel? (Index starts at 0) "))
@@ -64,7 +64,8 @@ for image in images:
     for j in range(len(autoCorr)):
         bufA = '%s \n' %(str(autoCorr[j]))
         outA.write(bufA)
-        bufB = '%s \n' %(str(radProf[j]))
+        bufR = '%s \n' %(str(radProf[j]))
+        outR.write(bufR)
 
     # pl.plot(autoCorr)
     # pl.xlabel('r/pixels')
