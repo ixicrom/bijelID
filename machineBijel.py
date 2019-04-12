@@ -3,7 +3,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as pl
 import scipy.fftpack as fftim
-from scipy.misc.pilutil import Image
+# from scipy.misc.pilutil import Image
 import pandas as pd
 import sklearn.neighbors as nn
 import sklearn.model_selection as cv
@@ -26,8 +26,8 @@ def correlate(x,y):
     fr2 = fftim.fft2(np.flipud(np.fliplr(y)))
     m,n = fr.shape
     cc = np.real(fftim.ifft2(fr*fr2))
-    cc = np.roll(cc, -m/2+1,axis=0)
-    cc = np.roll(cc, -n/2+1,axis=1)
+    cc = np.roll(cc, -257,axis=0)
+    cc = np.roll(cc, -257,axis=1)
     return cc
 
 def listTif_nohidden(path):
@@ -102,11 +102,11 @@ for image in images:
     #print(sample)
     autocorr_Dat['AutoTurnPart'][sample] = turn
 
-autocorr_Dat
+#autocorr_Dat
 exp_Dat=pd.concat([exp_Dat, autocorr_Dat['AutoTurnPart']],axis=1)
 
-exp_Dat.head()
-x=np.asarray(exp_Dat['AutoTurn'])
+print(exp_Dat.head())
+x=np.asarray(exp_Dat['AutoTurnPart'])
 y=np.asarray(exp_Dat['Bijel'])
 
 
@@ -118,5 +118,5 @@ knn=nn.KNeighborsClassifier()
 param_grid={'n_neighbors': np.arange(1,69)}
 knn_gscv = cv.GridSearchCV(knn, param_grid, cv=10)
 knn_gscv.fit(x.reshape(-1,1),y.reshape(-1,1))
-print knn_gscv.best_params_
-print knn_gscv.best_score_
+print(knn_gscv.best_params_)
+print(knn_gscv.best_score_)
