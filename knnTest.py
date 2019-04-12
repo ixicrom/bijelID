@@ -9,11 +9,12 @@ from sklearn.metrics import accuracy_score
 iris = load_iris()
 data = pd.DataFrame(iris.data, columns=iris.feature_names)
 data['target']=pd.Series(iris.target)
-data.head()
+len(data['target'])
+
 
 x=data.drop(columns=['target'])
 y=data['target'].values
-y[0:5]
+
 
 knn=nn.KNeighborsClassifier()
 param_grid={'n_neighbors': np.arange(1,69)}
@@ -26,3 +27,14 @@ pl.plot(plotx, ploty)
 
 print knn_gscv.best_params_
 print knn_gscv.best_score_
+
+x1=data['sepal width (cm)'].values
+x1[0:5]
+len(x1)
+len(y)
+
+knn1=nn.KNeighborsClassifier()
+knn1_gscv = cv.GridSearchCV(knn1, param_grid, cv=10)
+knn1_gscv.fit(x1.reshape(-1,1),y)
+print(knn1_gscv.best_params_)
+print(knn1_gscv.best_score_)
