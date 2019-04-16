@@ -26,8 +26,8 @@ def correlate(x,y):
     fr2 = fftim.fft2(np.flipud(np.fliplr(y)))
     m,n = fr.shape
     cc = np.real(fftim.ifft2(fr*fr2))
-    cc = np.roll(cc, -257,axis=0)
-    cc = np.roll(cc, -257,axis=1)
+    cc = np.roll(cc, int(-m/2+1),axis=0)
+    cc = np.roll(cc, int(-m/2+1),axis=1)
     return cc
 
 def listTif_nohidden(path):
@@ -86,7 +86,7 @@ imageDir='/Volumes/PhD/BijelData/Python/TIFs/'
 #workingDir='/Volumes/PhD/BijelData/Test'
 images=listTif_nohidden(imageDir)
 
-imChannel=0
+imChannel=int(input("Which image channel? (Index starts at 0) "))
 
 for image in images:
     a = io.imread(os.path.join(imageDir,image))[imChannel]
