@@ -80,13 +80,13 @@ exp_Dat = pd.read_csv(datFile) #read in experimental data file
 exp_Dat.index=exp_Dat['Sample Number'] #rename rows as sample numbers
 
 
-autocorr_Dat = pd.DataFrame(index=exp_Dat.index, columns=['AutoTurn', 'AutoTurnPart'])
+autocorr_Dat = pd.DataFrame(index=exp_Dat.index, columns=['AutoTurn', 'AutoTurnPart', 'AutoTurnCount'])
 #calculate autocorrelation of each image
 imageDir='/Volumes/PhD/BijelData/Python/TIFs/'
 #workingDir='/Volumes/PhD/BijelData/Test'
 images=listTif_nohidden(imageDir)
 
-imChannel=1
+imChannel=0
 
 for image in images:
     a = io.imread(os.path.join(imageDir,image))[imChannel]
@@ -96,11 +96,8 @@ for image in images:
 
     autoCorr = (radial_profile(ac3,(b.shape[0]/2,b.shape[1]/2))[:256]/radial_profile(ac3,(b.shape[0]/2.,b.shape[1]/2.))[:256][0]) #256 should be replaced by half image size, i.e. this is for a 512x512 image
 
-    turn=turnpoints(autoCorr)[1]
-
+    turns=turnpoints(autoCorr)
     sample=image.split("_")[0]
-    #print(sample)
-    autocorr_Dat['AutoTurnPart'][sample] = turn
 
 #autocorr_Dat
 exp_Dat=pd.concat([exp_Dat, autocorr_Dat['AutoTurnPart']],axis=1)
@@ -110,9 +107,13 @@ x=np.asarray(exp_Dat['AutoTurnPart'])
 y=np.asarray(exp_Dat['Bijel'])
 
 
-x_train, x_test, y_train, y_test=cv.train_test_split(x,y,test_size=0.33, random_state=42)
-x_train=x_train.reshape(-1,1)
-x_test=x_test.reshape(-1,1)
+# x_train, x_test, y_train, y_test=cv.train_test_split(x,y,test_size=0.33, random_state=42)
+# x_train=x_train.reshape(-1,1)
+# x_test=x_test.reshape(-1,1)
+
+x=exp_Dat[['AutoTurn','AutoTurnCount']]
+x.head()
+y=exp_Dat['Bijel'].values
 
 knn=nn.KNeighborsClassifier()
 param_grid={'n_neighbors': np.arange(1,69)}
