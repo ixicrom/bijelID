@@ -4,13 +4,15 @@ import glob
 import pandas as pd
 import matplotlib.pyplot as pl
 
-x=np.arange(257)
-dir="/Volumes/PhD/BijelData/ParticleChannel/autoCorr"
-imList = ["54i_", "57i_", "58i_", "65i_", "67ii_", "68i_"]
 
 
-filename=glob.glob('/Volumes/PhD/BijelData/ParticleChannel/autoCorr/54i_*')
+filename=glob.glob('/Volumes/PhD/BijelData/ParticleChannel/radProf/76i_*')
 y=np.genfromtxt(filename[0], delimiter=' ', dtype='float64')
+x=np.arange(len(y))
 
 pl.plot(x,y)
+pl.xlabel('q (pixels)')
+pl.ylabel('SF')
+pl.title('76i, a bijel')
+pl.savefig('/Volumes/PhD/BijelData/ParticleChannel/radProf/B_SF_76i')
 pl.show()
