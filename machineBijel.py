@@ -80,7 +80,7 @@ exp_Dat = pd.read_csv(datFile) #read in experimental data file
 exp_Dat.index=exp_Dat['Sample Number'] #rename rows as sample numbers
 
 
-autocorr_Dat = pd.DataFrame(index=exp_Dat.index, columns=['AutoTurn', 'AutoTurnPart', 'AutoTurnCount'])
+autocorr_Dat = pd.DataFrame(index=exp_Dat.index, columns=['AutoTurn', 'AutoTurnCount'])
 #calculate autocorrelation of each image
 imageDir='/Volumes/PhD/BijelData/Python/TIFs/'
 #workingDir='/Volumes/PhD/BijelData/Test'
@@ -98,26 +98,37 @@ for image in images:
 
     turns=turnpoints(autoCorr)
     sample=image.split("_")[0]
-
-#autocorr_Dat
-exp_Dat=pd.concat([exp_Dat, autocorr_Dat['AutoTurnPart']],axis=1)
+    autocorr_Dat['AutoTurn'][sample] = turns[0]
+    autocorr_Dat['AutoTurnCount'][sample] = len(turns)
+print(autocorr_Dat)
+exp_Dat=pd.concat([exp_Dat, autocorr_Dat['AutoTurn'], autocorr_Dat['AutoTurnCount']],axis=1)
 
 print(exp_Dat.head())
-x=np.asarray(exp_Dat['AutoTurnPart'])
-y=np.asarray(exp_Dat['Bijel'])
 
+x_cv=exp_Dat[['AutoTurn','AutoTurnCount']]
+x_cv.head()
+y_cv=exp_Dat['Bijel'].values
 
-# x_train, x_test, y_train, y_test=cv.train_test_split(x,y,test_size=0.33, random_state=42)
-# x_train=x_train.reshape(-1,1)
-# x_test=x_test.reshape(-1,1)
-
-x=exp_Dat[['AutoTurn','AutoTurnCount']]
-x.head()
-y=exp_Dat['Bijel'].values
-
-knn=nn.KNeighborsClassifier()
+knn=nn.KNeighborsClassifier(n_neighbors=11)
 param_grid={'n_neighbors': np.arange(1,69)}
 knn_gscv = cv.GridSearchCV(knn, param_grid, cv=10)
-knn_gscv.fit(x.reshape(-1,1),y.reshape(-1,1))
+knn_gscv.fit(x_cv,y_cv.reshape(-1,1))
 print(knn_gscv.best_params_)
 print(knn_gscv.best_score_)
+
+
+# knn without cross-validation
+x=np.asarray(exp_Dat[['AutoTurn','AutoTurnCount']])
+y=np.asarray(exp_Dat['Bijel'])
+
+x_train, x_test, y_train, y_test=cv.train_test_split(x,y,test_size=0.3, random_state=42)
+
+knn_single=knn.fit(x_train,y_train)
+pred = knn_single.predict(x_test)
+
+print(pred)
+print(y_test)
+
+from sklearn import metrics
+
+print("Accuracy: ", metrics.accuracy_score(y_test, pred))
