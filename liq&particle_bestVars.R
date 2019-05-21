@@ -119,5 +119,13 @@ set.seed(1234)
 knnFit2varB <- train(Bijel~Liquid.First.Turn+Particle.Gradients.20, data=dat, method="knn", trControl=trCtrl, tuneLength=30)
 print(knnFit2varB)
 
+#non cross-validated errors for all models
+table(ifelse(predict(logRegFitParticle, type="prob")[2]>=0.5, "y","n"),Bijel)
+table(predict(knnFitLiquid), Bijel)
+table(predict(knnFitBoth), Bijel)
 
-pred <- predict(logRegFitBoth, type="prob")
+probs <- predict(logRegFitBoth, type="prob")
+pred0.5 <- ifelse(probs[2]>0.5, "y", "n")
+
+table(pred0.5, Bijel)
+
