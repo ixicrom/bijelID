@@ -70,7 +70,7 @@ trCtrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
 
 set.seed(1234)
 knnFitLiquid <- train(Bijel ~ Liquid.First.Turn, data=dat, method="knn", trControl=trCtrl, tuneLength=30)
-print("KNN liquid channel:")
+table(predict(knnFitLiquid), Bijel)
 
 plot(knnFitLiquid)
 dev.copy(png, 'knn_xVal_liq.png')
@@ -127,3 +127,7 @@ errorDF = data.frame(c(1:1000), data.frame(unlist(errors)))
 ggplot(data=errorDF, aes(errorDF$unlist.errors.)) + geom_histogram() + geom_vline(aes(xintercept=0.1455189, linetype="Model error"), show.legend= TRUE, color="purple") + xlab("Error for randomly labelled samples") + ylab("Frequency") + theme(legend.title = element_blank())
 dev.copy(png, 'random_hist.png')
 dev.off()
+
+
+
+

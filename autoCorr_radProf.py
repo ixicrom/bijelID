@@ -5,6 +5,7 @@ import scipy.fftpack as fftim
 # from scipy.misc.pilutil import Image
 import pandas as pd
 from skimage import io
+import math
 #from Tkinter import Tk
 #from tkinter.filedialog import askopenfilename
 
@@ -45,7 +46,7 @@ exp_Dat.index=exp_Dat['Sample Number'] #rename rows as sample numbers
 
 autocorr_Dat = pd.DataFrame(index=exp_Dat.index, columns=['AutoTurn', 'AutoTurnPart'])
 imageDir='/Volumes/PhD/BijelData/Python/TIFs/'
-workingDir='/Volumes/PhD/BijelData/ParticleChannel/'
+workingDir='/Volumes/PhD/BijelData/'
 images=listTif_nohidden(imageDir)
 
 imChannel=int(input("Which image channel? (Index starts at 0) "))
@@ -58,17 +59,31 @@ for image in images:
     autoCorr = (radial_profile(ac3,(b.shape[0]/2,b.shape[1]/2))[:256]/radial_profile(ac3,(b.shape[0]/2.,b.shape[1]/2.))[:256][0]) #256 should be replaced by half image size, i.e. this is for a 512x512 image
     radProf = (radial_profile(b,(b.shape[0]/2,b.shape[1]/2))[:256]/radial_profile(b,(b.shape[0]/2.,b.shape[1]/2.))[:256][0]) #256 should be replaced by half image size, i.e. this is for a 512x512 image
 
-    outA = open(os.path.join(workingDir,'{}_autoCorr_channel{}.txt').format(image, imChannel),'w') #outputs to file called autoCorr.txt
-    outR = open(os.path.join(workingDir,'{}_radProf_channel{}.txt').format(image, imChannel),'w') #outputs to file called autoCorr.txt
+    unscaledX=np.arange(0,256,1.)
+    L=640.17
+    scaleFactorA=2*math.pi/L
+    scaledXA=unscaledX*scaleFactorA
 
-    for j in range(len(autoCorr)):
-        bufA = '%s \n' %(str(autoCorr[j]))
-        outA.write(bufA)
-        bufR = '%s \n' %(str(radProf[j]))
-        outR.write(bufR)
+    #outA = open(os.path.join(workingDir,'{}_autoCorr_channel{}_microns.txt').format(image, imChannel),'w') #outputs to file called autoCorr.txt
+    #outR = open(os.path.join(workingDir,'{}_radProf_channel{}_microns.txt').format(image, imChannel),'w') #outputs to file called autoCorr.txt
 
-    # pl.plot(autoCorr)
-    # pl.xlabel('r/pixels')
-    # pl.ylabel('Intensity')
-    # pl.savefig('%s_autoCorr.png'%image)
-    # pl.cla()
+    # for j in range(len(autoCorr)):
+    #     bufA = '%s \n' %(str(autoCorr[j]))
+    #     outA.write(bufA)
+    #     bufR = '%s \n' %(str(radProf[j]))
+    #     outR.write(bufR)
+
+    pl.plot(scaledXA, autoCorr)
+    pl.xlabel('r (μm)')
+    pl.ylabel('Autocorrelation Function')
+    pl.savefig(os.path.join(workingDir, str(imChannel),'%s_autoCorr_microns.png'%image))
+    pl.cla()
+
+    scaleFactorR=640.17/512
+    scaledXR=unscaledX*scaleFactorR
+
+    pl.plot(scaledXR, radProf)
+    pl.xlabel('r (1/μm)')
+    pl.ylabel('Structure Factor')
+    pl.savefig(os.path.join(workingDir, str(imChannel), '%s_radProf_microns.png'%image))
+    pl.cla()
