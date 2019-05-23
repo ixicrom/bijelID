@@ -70,7 +70,6 @@ trCtrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
 
 set.seed(1234)
 knnFitLiquid <- train(Bijel ~ Liquid.First.Turn, data=dat, method="knn", trControl=trCtrl, tuneLength=30)
-table(predict(knnFitLiquid), Bijel)
 
 plot(knnFitLiquid)
 dev.copy(png, 'knn_xVal_liq.png')
@@ -85,7 +84,6 @@ dev.off()
 
 set.seed(1234)
 logRegFitParticle <- train(Bijel ~ Particle.Gradients.10 + Particle.Gradients.20, data=dat, method="glm", trControl=trCtrl)
-print("Logistic regression particle channel:")
 
 png('results_part.png')
 plot(Particle.Gradients.10, Particle.Gradients.20, col=Bijel, pch=16)
@@ -130,4 +128,7 @@ dev.off()
 
 
 
-
+#result tables
+table(predict(logRegFitBoth), Bijel)
+table(predict(logRegFitParticle), Bijel)
+table(predict(knnFitLiquid), Bijel)
