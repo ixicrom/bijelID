@@ -1,5 +1,6 @@
 library(pastecs)
 library(caret)
+library(ggplot2)
 
 exp_Data <- read.csv("/Volumes/PhD/BijelData/Bijel_Data_Cleaner_ToRead.csv", na.strings = "?")
 exp_Data$Sample.Number <- as.character(exp_Data$Sample.Number)
@@ -36,7 +37,7 @@ lineFits <- lapply(1:135, function(n) lm(unlist(y[n,]) ~ r[1:20]))
 lineCoeffs <- lapply(lineFits, function(m) m$coefficients)
 lineGradients <- lapply (1:135, function(p) unname(lineCoeffs[[p]][2]))
 exp_Data$Particle.Gradients.20 <- unlist(lineGradients)
-
+exp_Data$Bijel <- ifelse(exp_Data$Bijel=="y", "Yes", "No")
 ggplot(exp_Data, aes(x=as.factor(Bijel), y=Particle.Gradients.20, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 20 points of particle ACF")+theme(plot.title = element_text(hjust = 0.5))
 dev.copy(png, 'bj_partGrad20.png')
 dev.off()
@@ -47,7 +48,7 @@ lineCoeffs2 <- lapply(lineFits2, function(m) m$coefficients)
 lineGradients2 <- lapply (1:135, function(p) unname(lineCoeffs2[[p]][2]))
 exp_Data$Particle.Gradients.10 <- unlist(lineGradients2)
 
-ggplot(exp_Data, aes(x=as.factor(Bijel), y=Particle.Gradients.10, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 10 points of particle ACF")+theme(plot.title = element_text(hjust = 0.5))
+ggplot(exp_Data, aes(x=as.factor(Bijel), y=Particle.Gradients.10, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 10 points of particle ACF")+theme(plot.title = element_text(hjust = 0.5))  + theme(text = element_text(size=20), axis.title = element_text(size=24))
 dev.copy(png, 'bj_partGrad10.png')
 dev.off()
 
@@ -56,8 +57,8 @@ liquidTurns <- lapply(1:135, function(y) turnpoints(unlist(exp_Data$Autocorrelat
 firstTurn <- lapply(1:135, function(y) liquidTurns[[y]]$tppos[1])
 exp_Data$Liquid.First.Turn <- unlist(firstTurn)
 
-ggplot(exp_Data, aes(x=as.factor(Bijel), y=Liquid.First.Turn, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Position") + ggtitle("Position of first turning points of liquid ACF (pixels)")
-dev.copy(png, 'bj_liqTurn.png')
+png('bj_liqTurn.png')
+ggplot(exp_Data, aes(x=Bijel, y=Liquid.First.Turn, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Position (pixels)") + ggtitle("First turning point of liquid ACF")  +theme(plot.title = element_text(hjust = 0.5), legend.position="none") + theme(text = element_text(size=20), axis.title = element_text(size=24))
 dev.off()
 
 
