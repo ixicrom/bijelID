@@ -76,9 +76,12 @@ plot(knnFitLiquid)
 dev.copy(png, 'knn_xVal_liq.png')
 dev.off()
 
+set.seed(1234)
+y=jitter(rep(0, each=135))
+
 png('results_liq.png', width=800, height=400)
-plot(sort(Liquid.First.Turn), rep(0, each=135), col=Bijel, pch=16, yaxt='n', xlab="Position of first turning point in Liquid Channel ACF", ylab="")
-points(sort(Liquid.First.Turn), rep(0, each=135), col=predict(knnFitLiquid), pch=1, cex=1.5)
+plot(y~Liquid.First.Turn, col=Bijel, pch=16, yaxt='n', xlab="Position of first turning point in Liquid Channel ACF", ylab="")
+points(y~Liquid.First.Turn, col=predict(knnFitLiquid), pch=1, cex=1.5)
 legend("topright", legend=c("Bijel", "Non-bijel", "Pred bijel", "Pred non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"))
 dev.off()
 
