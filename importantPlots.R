@@ -1,6 +1,7 @@
 library(pastecs)
 library(caret)
 library(ggplot2)
+library(Hmisc)
 
 exp_Data <- read.csv("/Volumes/PhD/BijelData/Bijel_Data_Cleaner_ToRead.csv", na.strings = "?")
 exp_Data$Sample.Number <- as.character(exp_Data$Sample.Number)
@@ -62,7 +63,7 @@ firstTurn <- lapply(1:135, function(y) liquidTurns[[y]]$tppos[1])
 exp_Data$Liquid.First.Turn <- unlist(firstTurn)
 
 png('bj_liqTurn.png', res=300, height=1200, width=1800)
-ggplot(exp_Data, aes(x=Bijel.label, y=Liquid.First.Turn, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 10 points of particle ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
+ggplot(exp_Data, aes(x=Bijel.label, y=Liquid.First.Turn, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Position") + ggtitle("Position of first turning point of liquid ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
 dev.off()
 
 
@@ -85,9 +86,11 @@ y=jitter(rep(0, each=135))
 
 #liquid results plot
 png('results_liq.png', res=300, height=1200, width=2400)
-plot(y~Liquid.First.Turn, col=Bijel, pch=16, yaxt='n', xlab="Position of first turning point in Liquid Channel ACF", ylab="")
+par(ps=20, mar=c(5,1,1,1), cex=1, cex.axis=0.8)
+plot(y~Liquid.First.Turn, col=Bijel, pch=16, yaxt='n', xlab="Position of first turning point in Liquid Channel ACF", ylab="", log="x")
+minor.tick(10,0,0.5)
 points(y~Liquid.First.Turn, col=predict(knnFitLiquid), pch=1, cex=1.5)
-legend("topright", legend=c("Bijel", "Non-bijel", "Pred bijel", "Pred non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"))
+legend("topright", legend=c("Bijel", "Non-bijel", "Pred bijel", "Pred non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"), cex=0.7)
 dev.off()
 
 
@@ -139,22 +142,22 @@ dev.off()
 
 
 
-#random sampling histogram
-bijelLabs <- replicate(1000, sample(c("y","n"), 135, replace=TRUE, prob=c(.68, .32)))
-bijelLabs[,1]
-
-errors <- vector("list", 1000)
-for(i in c(1:1000)){
-  dat=data.frame(Liquid.First.Turn, Particle.Gradients.20, Particle.Gradients.10, y=bijelLabs[,i])
-  set.seed(1234)
-  fit <- train(y ~., data=dat, method="glm", trControl=trCtrl)
-  errors[i] <- 1-fit$results$Accuracy
-}
-
-errorDF = data.frame(c(1:1000), data.frame(unlist(errors)))
-ggplot(data=errorDF, aes(errorDF$unlist.errors.)) + geom_histogram() + geom_vline(aes(xintercept=0.1455189, linetype="Model error"), show.legend= TRUE, color="purple") + xlab("Error for randomly labelled samples") + ylab("Frequency") + theme(legend.title = element_blank())
-dev.copy(png, 'random_hist.png')
-dev.off()
+# #random sampling histogram
+# bijelLabs <- replicate(1000, sample(c("y","n"), 135, replace=TRUE, prob=c(.68, .32)))
+# bijelLabs[,1]
+# 
+# errors <- vector("list", 1000)
+# for(i in c(1:1000)){
+#   dat=data.frame(Liquid.First.Turn, Particle.Gradients.20, Particle.Gradients.10, y=bijelLabs[,i])
+#   set.seed(1234)
+#   fit <- train(y ~., data=dat, method="glm", trControl=trCtrl)
+#   errors[i] <- 1-fit$results$Accuracy
+# }
+# 
+# errorDF = data.frame(c(1:1000), data.frame(unlist(errors)))
+# ggplot(data=errorDF, aes(errorDF$unlist.errors.)) + geom_histogram() + geom_vline(aes(xintercept=0.1455189, linetype="Model error"), show.legend= TRUE, color="purple") + xlab("Error for randomly labelled samples") + ylab("Frequency") + theme(legend.title = element_blank())
+# dev.copy(png, 'random_hist.png')
+# dev.off()
 
 
 
