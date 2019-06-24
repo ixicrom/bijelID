@@ -25,7 +25,7 @@ dat1 <- exp_plot_Data[index1,]
 dat2 <- exp_plot_Data[index2,]
 
 png("experiment_params.png", width=1600, height=800)
-plot(dat1$HMDS.g, dat1$Nitromethane.m.f, col=dat1$Bijel, pch=3, xlab="HMDS/g", ylab="Nitromethane mass fraction", cex=2, , cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)
-points(dat2$HMDS.g, dat2$Nitromethane.m.f, col=dat2$Bijel, pch=4, cex=2)
-legend("bottomright", legend=c("Sample 1", "Sample 2", "Bijel", "Non-bijel"), col=c(rep("gray",2),"black", "red"), pch=c(3,4,8,8), ncol=2, cex=2)
+plot(dat1$HMDS.g, dat1$Nitromethane.m.f, col=dat1$Bijel, pch=16, xlab="HMDS/g", ylab="Nitromethane mass fraction", cex=2, , cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)
+points(dat2$HMDS.g, dat2$Nitromethane.m.f, col=dat2$Bijel, pch=1, cex=3)
+legend("bottomright", legend=c("Sample 1", "Sample 2", "Bijel", "Non-bijel"), col=c(rep("gray",2),"black", "red"), pch=c(16,1,16,16), ncol=2, cex=2)
 dev.off()
