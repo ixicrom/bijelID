@@ -124,49 +124,91 @@ table(ifelse(predict(logRegFitParticle, type="prob")[2]>=0.5, "y","n"),Bijel)
 table(predict(knnFitLiquid), Bijel)
 table(predict(knnFitBoth), Bijel)
 
-probs <- predict(logRegFitBoth, type="prob")
 
-#ROC by hand
-pred0 <- ifelse(probs[2]>1, "y", "n")
-
-test <- as.data.frame(table(pred0, Bijel))
-fp0.5 <- test[1,2]
-fn0.5 <- test[1,3]
-
-boundaries <- c(0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0)
-TPR <- FPR <- vector(length=length(boundaries))
-i=1
-for (p in boundaries) {
-  pred <- ifelse(probs[2]>p, "y", "n")
-  results <- as.data.frame(table(pred, Bijel))
-  tn <- results[1,3]
-  fp <- results[2,3]
-  fn <- results[3,3]
-  tp <- results[4,3]
-  TPR[i] <- tp/(tp+fn)
-  FPR[i] <- fp/(fn+tp)
-  i <- i+1
-}
-fp0 <- 43
-tp0 <- 92
-tn0 <- 0
-fn0 <- 0
-TPR[1] <- tp0/(tp0+fn0)
-FPR[1] <- fp0/(fn0+tp0)
-fp1 <- 0
-tp1 <- 0
-tn1 <- 43
-fn1 <- 92
-TPR[length(TPR)] <- tp1/(tp1+fn1)
-FPR[length(FPR)] <- fp1/(fn1+tp1)
-
-roc <- data.frame(val=boundaries, TPR, FPR)
-plot(roc$FPR, roc$TPR, xlim=c(0,.6), xlab="False positive rate", ylab="True positive rate", col=roc$val*10+1)
-abline(0,1)
-legend(title="Prob","bottomright",col=roc$val*10+1, legend = roc$val, pch=1, cex=0.8)
+# #ROC by hand
+# probs <- predict(logRegFitBoth, type="prob")
+# pred0 <- ifelse(probs[2]>1, "y", "n")
+# 
+# test <- as.data.frame(table(pred0, Bijel))
+# fp0.5 <- test[1,2]
+# fn0.5 <- test[1,3]
+# 
+# boundaries <- c(0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0)
+# TPR <- FPR <- vector(length=length(boundaries))
+# i=1
+# for (p in boundaries) {
+#   pred <- ifelse(probs[2]>p, "y", "n")
+#   results <- as.data.frame(table(pred, Bijel))
+#   tn <- results[1,3]
+#   fp <- results[2,3]
+#   fn <- results[3,3]
+#   tp <- results[4,3]
+#   TPR[i] <- tp/(tp+fn)
+#   FPR[i] <- fp/(fn+tp)
+#   i <- i+1
+# }
+# fp0 <- 43
+# tp0 <- 92
+# tn0 <- 0
+# fn0 <- 0
+# TPR[1] <- tp0/(tp0+fn0)
+# FPR[1] <- fp0/(fn0+tp0)
+# fp1 <- 0
+# tp1 <- 0
+# tn1 <- 43
+# fn1 <- 92
+# TPR[length(TPR)] <- tp1/(tp1+fn1)
+# FPR[length(FPR)] <- fp1/(fn1+tp1)
+# 
+# roc <- data.frame(val=boundaries, TPR, FPR)
+# plot(roc$FPR, roc$TPR, xlim=c(0,.6), xlab="False positive rate", ylab="True positive rate", col=roc$val*10+1)
+# abline(0,1)
+# legend(title="Prob","bottomright",col=roc$val*10+1, legend = roc$val, pch=1, cex=0.8)
 
 
 #ROC with package
 library(verification)
 ROC <- roc.plot(ifelse(Bijel=="y",0,1), probs, thresholds=boundaries, main="Identifying failed bijels")
 ROC$roc.vol
+
+
+#Particle channel only one variable
+set.seed(1234)
+logRegFitParticle10 <- train(Bijel ~ Particle.Gradients.10, data=dat, method="glm", trControl=trCtrl)
+print("Particle channel 10-point gradient:")
+print(logRegFitParticle10)
+
+set.seed(1234)
+logRegFitParticle20 <- train(Bijel ~ Particle.Gradients.20, data=dat, method="glm", trControl=trCtrl)
+print("Particle channel 20-point gradient:")
+print(logRegFitParticle20)
+
+
+
+#knn prediction as variable in logistic regression
+dat$knn = ifelse(predict(knnFitLiquid)=="y",1,0)
+
+set.seed(1234)
+logRegFit_knnVar = train(Bijel~., data=dat, method="glm", trControl=trCtrl)
+print(logRegFit_knnVar)
+logRegFit_knnVar$finalModel
+
+set.seed(1234)
+logRegFit_knnPartVars = train(Bijel~Particle.Gradients.10+ Particle.Gradients.20 + knn, data=dat, method="glm", trControl=trCtrl)
+print(logRegFit_knnPartVars)
+
+set.seed(1234)
+logRegFit_knn2VarsA = train(Bijel~Liquid.First.Turn+ Particle.Gradients.20 + knn, data=dat, method="glm", trControl=trCtrl)
+print(logRegFit_knn2VarsA)
+
+set.seed(1234)
+logRegFit_knn2VarsB = train(Bijel~Liquid.First.Turn+ Particle.Gradients.10 + knn, data=dat, method="glm", trControl=trCtrl)
+print(logRegFit_knn2VarsB)
+
+dat$knnAll = ifelse(predict(knnFitBoth)=="y", 1,0)
+
+set.seed(1234)
+logRegFit_knnBoth = train(Bijel~Liquid.First.Turn+ Particle.Gradients.10 + Particle.Gradients.10 + knnAll, data=dat, method="glm", trControl=trCtrl)
+print(logRegFit_knnBoth)
+
+
