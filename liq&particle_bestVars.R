@@ -59,6 +59,9 @@ exp_Data$Liquid.First.Turn <- unlist(firstTurn)
 ggplot(exp_Data, aes(x=as.factor(Bijel), y=Liquid.First.Turn, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Position") + ggtitle("Position of first turning points of liquid ACF (pixels)")
 
 
+
+#________________________________________________________________________________
+
 attach(exp_Data)
 dat=data.frame(Particle.Gradients.20, Particle.Gradients.10, Liquid.First.Turn, Bijel)
 set.seed(1234)
@@ -126,14 +129,14 @@ table(predict(knnFitBoth), Bijel)
 
 
 # #ROC by hand
-# probs <- predict(logRegFitBoth, type="prob")
+ probs <- predict(logRegFitBoth, type="prob")
 # pred0 <- ifelse(probs[2]>1, "y", "n")
 # 
 # test <- as.data.frame(table(pred0, Bijel))
 # fp0.5 <- test[1,2]
 # fn0.5 <- test[1,3]
 # 
-# boundaries <- c(0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0)
+ boundaries <- c(0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0)
 # TPR <- FPR <- vector(length=length(boundaries))
 # i=1
 # for (p in boundaries) {
