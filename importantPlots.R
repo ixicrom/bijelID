@@ -31,10 +31,54 @@ colnames(autoCorrLiq) <- liqFileID
 autoCorrLiq_transpose <- data.frame(t(autoCorrLiq))
 exp_Data$Autocorrelation.Liquid <- autoCorrLiq_transpose[match(row.names(exp_Data),row.names(autoCorrLiq_transpose)),c(1:256)]
 
+#example SF plots (particle channel)
+bijelSF_p <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/52ii_Image23.tif_radProf_channel1.txt"))
+noBijelSF_p <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/54i_Image9.tif_radProf_channel1.txt"))
+x=c(1:255)
+xSF=x*640.17/512
+png('SFexamples_part.png', res=300, width=1800, height=1200)
+plot(xSF, bijelSF_p, type="l", lwd=2, col="red", xlab = "q (1/μm)", ylab="Structure Factor", ylim=c(0.4,2.2))
+lines(xSF, noBijelSF_p, lwd=2)
+legend("bottomright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)#, cex=1.4)
+dev.off()
+
+#example SF plots (liquid channel)
+bijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/52ii_Image23.tif_radProf_channel0.txt"))
+noBijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/54i_Image9.tif_radProf_channel0.txt"))
+png('SFexamples_liq.png', res=300, width=1800, height=1200)
+plot(xSF, bijelSF_l, type="l", lwd=2, col="red", xlab = "q (1/μm)", ylab="Structure Factor", ylim=c(0.4,2.2))
+lines(xSF, noBijelSF_l, lwd=2)
+legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)#, cex=1.4)
+dev.off()
+
+#example ACF plots (liquid channel)
+bijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/LiquidChannel/autoCorr/52ii_Image23.tif_autoCorr_channel0.txt"))
+noBijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/LiquidChannel/autoCorr/54i_Image9.tif_autoCorr_channel0.txt"))
+x=c(1:255)
+xACF=x*pixel_to_micron
+png('ACFexamples_liq.png', res=300, width=1800, height=1200)
+plot(xACF, bijelACF_l, type="l", lwd=2, col="red", xlab = "r (μm)", ylab="Autocorrelation Function")
+lines(xACF, noBijelACF_l, lwd=2)
+legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)
+dev.off()
+
+#example ACF plots (particle channel)
+bijelACF_p <- unlist(read.csv("/Volumes/PhD/BijelData/ParticleChannel/autoCorr/52ii_Image23.tif_autoCorr_channel1.txt"))
+noBijelACF_p <- unlist(read.csv("/Volumes/PhD/BijelData/ParticleChannel/autoCorr/54i_Image9.tif_autoCorr_channel1.txt"))
+png('ACFexamples_part.png', res=300, width=1800, height=1200)
+plot(xACF, noBijelACF_p, type="l", lwd=2, col="black", xlab = "r (μm)", ylab="Autocorrelation Function")
+lines(xACF, bijelACF_p, lwd=2, col="red")
+legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)
+dev.off()
+
+
 #gradients of particle channel ACF
 r <- c(1:256)
-y <- exp_Data$Autocorrelation.Particle[1:20]
-lineFits <- lapply(1:135, function(n) lm(unlist(y[n,]) ~ r[1:20]))
+L <- 640.17
+pixel_to_micron <- 2*pi/L
+r_scaled <- r*pixel_to_micron
+y <- exp_Data$Autocorrelation.Particle[1:20] * pixel_to_micron
+lineFits <- lapply(1:135, function(n) lm(unlist(y[n,]) ~ r_scaled[1:20]))
 lineCoeffs <- lapply(lineFits, function(m) m$coefficients)
 lineGradients <- lapply (1:135, function(p) unname(lineCoeffs[[p]][2]))
 exp_Data$Particle.Gradients.20 <- unlist(lineGradients)
@@ -45,8 +89,8 @@ png('bj_partGrad20.png', res=300, height=1200, width=1800)
 ggplot(exp_Data, aes(x=Bijel.label, y=Particle.Gradients.20, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 20 points of particle ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
 dev.off()
 
-y2 <- exp_Data$Autocorrelation.Particle[1:10]
-lineFits2 <- lapply(1:135, function(n) lm(unlist(y2[n,]) ~ r[1:10]))
+y2 <- exp_Data$Autocorrelation.Particle[1:10] * pixel_to_micron
+lineFits2 <- lapply(1:135, function(n) lm(unlist(y2[n,]) ~ r_scaled[1:10]))
 lineCoeffs2 <- lapply(lineFits2, function(m) m$coefficients)
 lineGradients2 <- lapply (1:135, function(p) unname(lineCoeffs2[[p]][2]))
 exp_Data$Particle.Gradients.10 <- unlist(lineGradients2)
@@ -60,10 +104,10 @@ dev.off()
 #turning point of liquid channel ACF
 liquidTurns <- lapply(1:135, function(y) turnpoints(unlist(exp_Data$Autocorrelation.Liquid[y,])))
 firstTurn <- lapply(1:135, function(y) liquidTurns[[y]]$tppos[1])
-exp_Data$Liquid.First.Turn <- unlist(firstTurn)
+exp_Data$Liquid.First.Turn <- unlist(firstTurn) * pixel_to_micron
 
 png('bj_liqTurn.png', res=300, height=1200, width=1800)
-ggplot(exp_Data, aes(x=Bijel.label, y=Liquid.First.Turn, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Position") + ggtitle("Position of first turning point of liquid ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
+ggplot(exp_Data, aes(x=Bijel.label, y=Liquid.First.Turn, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Position (μm)") + ggtitle("Position of first turning point of liquid ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
 dev.off()
 
 
@@ -87,7 +131,7 @@ y=jitter(rep(0, each=135))
 #liquid results plot
 png('results_liq.png', res=300, height=1200, width=2400)
 par(ps=20, mar=c(5,1,1,1), cex=1, cex.axis=0.8)
-plot(y~Liquid.First.Turn, col=Bijel, pch=16, yaxt='n', xlab="Position of first turning point in Liquid Channel ACF", ylab="", log="x")
+plot(y~Liquid.First.Turn, col=Bijel, pch=16, yaxt='n', xlab="Position of first turning point in Liquid Channel ACF (μm)", ylab="", log="x")
 minor.tick(10,0,0.5)
 points(y~Liquid.First.Turn, col=predict(knnFitLiquid), pch=1, cex=1.5)
 legend("topright", legend=c("Bijel", "Non-bijel", "Pred bijel", "Pred non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"), cex=0.7)
@@ -165,3 +209,4 @@ dev.off()
 table(predict(logRegFitBoth), Bijel)
 table(predict(logRegFitParticle), Bijel)
 table(predict(knnFitLiquid), Bijel)
+
