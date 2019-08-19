@@ -36,7 +36,7 @@ bijelSF_p <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/52ii_Image2
 noBijelSF_p <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/54i_Image9.tif_radProf_channel1.txt"))
 x=c(1:255)
 xSF=x*640.17/512
-png('SFexamples_part.png', res=300, width=1800, height=1200)
+png('~/SFexamples_part.png', res=300, width=1800, height=1200)
 plot(xSF, bijelSF_p, type="l", lwd=2, col="red", xlab = "q (1/μm)", ylab="Structure Factor", ylim=c(0.4,2.2))
 lines(xSF, noBijelSF_p, lwd=2)
 legend("bottomright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)#, cex=1.4)
@@ -45,7 +45,7 @@ dev.off()
 #example SF plots (liquid channel)
 bijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/52ii_Image23.tif_radProf_channel0.txt"))
 noBijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/54i_Image9.tif_radProf_channel0.txt"))
-png('SFexamples_liq.png', res=300, width=1800, height=1200)
+png('~/SFexamples_liq.png', res=300, width=1800, height=1200)
 plot(xSF, bijelSF_l, type="l", lwd=2, col="red", xlab = "q (1/μm)", ylab="Structure Factor", ylim=c(0.4,2.2))
 lines(xSF, noBijelSF_l, lwd=2)
 legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)#, cex=1.4)
@@ -56,7 +56,7 @@ bijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/LiquidChannel/autoCorr/52i
 noBijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/LiquidChannel/autoCorr/54i_Image9.tif_autoCorr_channel0.txt"))
 x=c(1:255)
 xACF=x*pixel_to_micron
-png('ACFexamples_liq.png', res=300, width=1800, height=1200)
+png('~/ACFexamples_liq.png', res=300, width=1800, height=1200)
 plot(xACF, bijelACF_l, type="l", lwd=2, col="red", xlab = "r (μm)", ylab="Autocorrelation Function")
 lines(xACF, noBijelACF_l, lwd=2)
 legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)
@@ -65,7 +65,7 @@ dev.off()
 #example ACF plots (particle channel)
 bijelACF_p <- unlist(read.csv("/Volumes/PhD/BijelData/ParticleChannel/autoCorr/52ii_Image23.tif_autoCorr_channel1.txt"))
 noBijelACF_p <- unlist(read.csv("/Volumes/PhD/BijelData/ParticleChannel/autoCorr/54i_Image9.tif_autoCorr_channel1.txt"))
-png('ACFexamples_part.png', res=300, width=1800, height=1200)
+png('~/ACFexamples_part.png', res=300, width=1800, height=1200)
 plot(xACF, noBijelACF_p, type="l", lwd=2, col="black", xlab = "r (μm)", ylab="Autocorrelation Function")
 lines(xACF, bijelACF_p, lwd=2, col="red")
 legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)
@@ -85,7 +85,7 @@ exp_Data$Particle.Gradients.20 <- unlist(lineGradients)
 exp_Data$Bijel.label <- ifelse(exp_Data$Bijel=="y", "Yes", "No")
 
 #20 point gradient plot
-png('bj_partGrad20.png', res=300, height=1200, width=1800)
+png('~/bj_partGrad20.png', res=300, height=1200, width=1800)
 ggplot(exp_Data, aes(x=Bijel.label, y=Particle.Gradients.20, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 20 points of particle ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
 dev.off()
 
@@ -96,7 +96,7 @@ lineGradients2 <- lapply (1:135, function(p) unname(lineCoeffs2[[p]][2]))
 exp_Data$Particle.Gradients.10 <- unlist(lineGradients2)
 
 #10 point gradient plot
-png('bj_partGrad10.png', res=300, height=1200, width=1800)
+png('~/bj_partGrad10.png', res=300, height=1200, width=1800)
 ggplot(exp_Data, aes(x=Bijel.label, y=Particle.Gradients.10, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 10 points of particle ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
 dev.off()
 
@@ -106,7 +106,7 @@ liquidTurns <- lapply(1:135, function(y) turnpoints(unlist(exp_Data$Autocorrelat
 firstTurn <- lapply(1:135, function(y) liquidTurns[[y]]$tppos[1])
 exp_Data$Liquid.First.Turn <- unlist(firstTurn) * pixel_to_micron
 
-png('bj_liqTurn.png', res=300, height=1200, width=1800)
+png('~/bj_liqTurn.png', res=300, height=1200, width=1800)
 ggplot(exp_Data, aes(x=Bijel.label, y=Liquid.First.Turn, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Position (μm)") + ggtitle("Position of first turning point of liquid ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
 dev.off()
 
@@ -121,7 +121,7 @@ set.seed(1234)
 knnFitLiquid <- train(Bijel ~ Liquid.First.Turn, data=dat, method="knn", trControl=trCtrl, tuneLength=30)
 
 #liquid cross-val plot
-png('knn_xVal_liq.png', res=300, height=1200, width=1400)
+png('~/knn_xVal_liq.png', res=300, height=1200, width=1400)
 plot(knnFitLiquid)
 dev.off()
 
@@ -129,7 +129,7 @@ set.seed(1234)
 y=jitter(rep(0, each=135))
 
 #liquid results plot
-png('results_liq.png', res=300, height=1200, width=2400)
+png('~/results_liq.png', res=300, height=1200, width=2400)
 par(ps=20, mar=c(5,1,1,1), cex=1, cex.axis=0.8)
 plot(y~Liquid.First.Turn, col=Bijel, pch=16, yaxt='n', xlab="Position of first turning point in Liquid Channel ACF (μm)", ylab="", log="x")
 minor.tick(10,0,0.5)
@@ -142,9 +142,9 @@ set.seed(1234)
 logRegFitParticle <- train(Bijel ~ Particle.Gradients.10 + Particle.Gradients.20, data=dat, method="glm", trControl=trCtrl)
 
 #particle results plot
-png('results_part.png', res=300, height=1200, width=1200)
+png('~/results_part.png', res=300, height=1200, width=1200)
 par(ps=20, mar=c(5,5,2,1), cex=1, cex.axis=0.8)
-plot(Particle.Gradients.10, Particle.Gradients.20, col=Bijel, pch=16, xlab="SF 10-point gradient", ylab="SF 20-point gradient")
+plot(Particle.Gradients.10, Particle.Gradients.20, col=Bijel, pch=16, xlab="Particle ACF 10-point gradient", ylab="ACF 20-point gradient")
 points(Particle.Gradients.10, Particle.Gradients.20, col=predict(logRegFitParticle), pch=1, cex=1.5)
 legend("topleft", legend=c("Bijel", "Non-bijel", "Pred bijel", "Pred non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"), cex=0.7)
 dev.off()
@@ -164,7 +164,7 @@ logRegFitBoth <- train(Bijel~., data=dat, method="glm", trControl=trCtrl)
 
 
 #final results plots
-png('results_final.png', res=300, width=3600, height=1200)
+png('~/results_final.png', res=300, width=3600, height=1200)
 par(mfrow=c(1,3), ps=20, mar=c(5,5,2,1), cex=1, cex.axis=0.8)
 plot(Particle.Gradients.10, Liquid.First.Turn, col=Bijel, pch=16, xlab="SF 10-point gradient", ylab="ACF turning point")
 points(Particle.Gradients.10, Liquid.First.Turn, col=predict(logRegFitBoth), pch=1, cex=1.5)
