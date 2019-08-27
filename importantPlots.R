@@ -142,9 +142,9 @@ set.seed(1234)
 logRegFitParticle <- train(Bijel ~ Particle.Gradients.10 + Particle.Gradients.20, data=dat, method="glm", trControl=trCtrl)
 
 #particle results plot
-png('~/results_part.png', res=300, height=1200, width=1200)
+png('~/results_part.png', res=300, height=1400, width=1400)
 par(ps=20, mar=c(5,5,2,1), cex=1, cex.axis=0.8)
-plot(Particle.Gradients.10, Particle.Gradients.20, col=Bijel, pch=16, xlab="Particle ACF 10-point gradient", ylab="ACF 20-point gradient")
+plot(Particle.Gradients.10, Particle.Gradients.20, col=Bijel, pch=16, xlab="Particle ACF 10-point gradient", ylab="Particle ACF 20-point gradient")
 points(Particle.Gradients.10, Particle.Gradients.20, col=predict(logRegFitParticle), pch=1, cex=1.5)
 legend("topleft", legend=c("Bijel", "Non-bijel", "Pred bijel", "Pred non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"), cex=0.7)
 dev.off()
@@ -164,17 +164,17 @@ logRegFitBoth <- train(Bijel~., data=dat, method="glm", trControl=trCtrl)
 
 
 #final results plots
-png('~/results_final.png', res=300, width=3600, height=1200)
+png('~/results_final.png', res=300, width=4200, height=1400)
 par(mfrow=c(1,3), ps=20, mar=c(5,5,2,1), cex=1, cex.axis=0.8)
-plot(Particle.Gradients.10, Liquid.First.Turn, col=Bijel, pch=16, xlab="SF 10-point gradient", ylab="ACF turning point")
+plot(Particle.Gradients.10, Liquid.First.Turn, col=Bijel, pch=16, xlab="Particle ACF 10-point gradient", ylab="Liquid ACF turning point")
 points(Particle.Gradients.10, Liquid.First.Turn, col=predict(logRegFitBoth), pch=1, cex=1.5)
 legend("topleft", legend=c("Bijel", "Non-bijel", "Pred bijel", "Pred non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"), cex=0.7)
 
-plot(Particle.Gradients.20, Liquid.First.Turn, col=Bijel, pch=16, xlab="SF 20-point gradient", ylab="ACF turning point")
+plot(Particle.Gradients.20, Liquid.First.Turn, col=Bijel, pch=16, xlab="Particle ACF 20-point gradient", ylab="Liquid ACF turning point")
 points(Particle.Gradients.20, Liquid.First.Turn, col=predict(logRegFitBoth), pch=1, cex=1.5)
 legend("topleft", legend=c("Bijel", "Non-bijel", "Pred bijel", "Pred non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"), cex=0.7)
 
-plot(Particle.Gradients.10, Particle.Gradients.20, col=Bijel, pch=16, xlab="SF 10-point gradient", ylab="SF 20-point gradient")
+plot(Particle.Gradients.10, Particle.Gradients.20, col=Bijel, pch=16, xlab="Particle ACF 10-point gradient", ylab="Particle ACF 20-point gradient")
 points(Particle.Gradients.10, Particle.Gradients.20, col=predict(logRegFitBoth), pch=1, cex=1.5)
 legend("topleft", legend=c("Bijel", "Non-bijel", "Pred bijel", "Pred non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"), cex=0.7)
 
