@@ -37,7 +37,7 @@ noBijelSF_p <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/54i_Image
 x=c(1:255)
 xSF=x*640.17/512
 png('~/SFexamples_part.png', res=300, width=1800, height=1200)
-plot(xSF, bijelSF_p, type="l", lwd=2, col="red", xlab = "q (1/μm)", ylab="Structure Factor", ylim=c(0.4,2.2))
+plot(xSF, bijelSF_p, type="l", lwd=2, col="red", xlab = "q (1/μm)", ylab="Structure Factor", ylim=c(0.4,2.2),cex.axis=1.5,cex.lab=2,mgp=c(2.2,0.7,0))
 lines(xSF, noBijelSF_p, lwd=2)
 legend("bottomright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)#, cex=1.4)
 dev.off()
@@ -46,7 +46,7 @@ dev.off()
 bijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/52ii_Image23.tif_radProf_channel0.txt"))
 noBijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/54i_Image9.tif_radProf_channel0.txt"))
 png('~/SFexamples_liq.png', res=300, width=1800, height=1200)
-plot(xSF, bijelSF_l, type="l", lwd=2, col="red", xlab = "q (1/μm)", ylab="Structure Factor", ylim=c(0.4,2.2))
+plot(xSF, bijelSF_l, type="l", lwd=2, col="red", xlab = "q (1/μm)", ylab="Structure Factor", ylim=c(0.4,2.2),cex.axis=1.5,cex.lab=2,mgp=c(2.2,0.7,0))
 lines(xSF, noBijelSF_l, lwd=2)
 legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)#, cex=1.4)
 dev.off()
@@ -57,7 +57,7 @@ noBijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/LiquidChannel/autoCorr/5
 x=c(1:255)
 xACF=x*pixel_to_micron
 png('~/ACFexamples_liq.png', res=300, width=1800, height=1200)
-plot(xACF, bijelACF_l, type="l", lwd=2, col="red", xlab = "r (μm)", ylab="Autocorrelation Function")
+plot(xACF, bijelACF_l, type="l", lwd=2, col="red", xlab = "r (μm)", ylab="Autocorrelation Function",cex.axis=1.5,cex.lab=2,mgp=c(2.2,0.7,0))
 lines(xACF, noBijelACF_l, lwd=2)
 legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)
 dev.off()
@@ -66,7 +66,7 @@ dev.off()
 bijelACF_p <- unlist(read.csv("/Volumes/PhD/BijelData/ParticleChannel/autoCorr/52ii_Image23.tif_autoCorr_channel1.txt"))
 noBijelACF_p <- unlist(read.csv("/Volumes/PhD/BijelData/ParticleChannel/autoCorr/54i_Image9.tif_autoCorr_channel1.txt"))
 png('~/ACFexamples_part.png', res=300, width=1800, height=1200)
-plot(xACF, noBijelACF_p, type="l", lwd=2, col="black", xlab = "r (μm)", ylab="Autocorrelation Function")
+plot(xACF, noBijelACF_p, type="l", lwd=2, col="black", xlab = "r (μm)", ylab="Autocorrelation Function",cex.axis=1.5,cex.lab=2,mgp=c(2.2,0.7,0))
 lines(xACF, bijelACF_p, lwd=2, col="red")
 legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)
 dev.off()
@@ -186,22 +186,22 @@ dev.off()
 
 
 
-# #random sampling histogram
-# bijelLabs <- replicate(1000, sample(c("y","n"), 135, replace=TRUE, prob=c(.68, .32)))
-# bijelLabs[,1]
-# 
-# errors <- vector("list", 1000)
-# for(i in c(1:1000)){
-#   dat=data.frame(Liquid.First.Turn, Particle.Gradients.20, Particle.Gradients.10, y=bijelLabs[,i])
-#   set.seed(1234)
-#   fit <- train(y ~., data=dat, method="glm", trControl=trCtrl)
-#   errors[i] <- 1-fit$results$Accuracy
-# }
-# 
-# errorDF = data.frame(c(1:1000), data.frame(unlist(errors)))
-# ggplot(data=errorDF, aes(errorDF$unlist.errors.)) + geom_histogram() + geom_vline(aes(xintercept=0.1455189, linetype="Model error"), show.legend= TRUE, color="purple") + xlab("Error for randomly labelled samples") + ylab("Frequency") + theme(legend.title = element_blank())
-# dev.copy(png, 'random_hist.png')
-# dev.off()
+#random sampling histogram
+bijelLabs <- replicate(1000, sample(c("y","n"), 135, replace=TRUE, prob=c(.68, .32)))
+bijelLabs[,1]
+
+errors <- vector("list", 1000)
+for(i in c(1:1000)){
+ dat=data.frame(Liquid.First.Turn, Particle.Gradients.20, Particle.Gradients.10, y=bijelLabs[,i])
+ set.seed(1234)
+ fit <- train(y ~., data=dat, method="glm", trControl=trCtrl)
+ errors[i] <- 1-fit$results$Accuracy
+}
+
+errorDF = data.frame(c(1:1000), data.frame(unlist(errors)))
+png('~/random_hist.png', res=300, height=1400, width=1600)
+ggplot(data=errorDF, aes(errorDF$unlist.errors.)) + geom_histogram() + geom_vline(aes(xintercept=0.1455189, linetype="Model error"), show.legend= TRUE, color="purple") + xlab("Error for randomly labelled samples") + ylab("Frequency") + theme(legend.title = element_blank())
+dev.off()
 
 
 
