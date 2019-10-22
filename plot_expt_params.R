@@ -3,7 +3,7 @@ library(caret)
 library(ggplot2)
 library(stringr)
 
-exp_Data <- read.csv("/Volumes/csce/BijelData/Bijel_Data_Cleaner_ToRead.csv", na.strings = "?")
+exp_Data <- read.csv("/Volumes/PhD/BijelData/Bijel_Data_Cleaner_ToRead.csv", na.strings = "?")
 exp_Data$Sample.Number <- as.character(exp_Data$Sample.Number)
 rownames(exp_Data) <- exp_Data$Sample.Number
 
@@ -27,5 +27,5 @@ dat2 <- exp_plot_Data[index2,]
 png("~/experiment_params.png", res=300, width=2400, height=1200)
 plot(dat1$HMDS.g, dat1$Nitromethane.m.f, col=dat1$Bijel, pch=16, xlab="HMDS/g", ylab="Nitromethane mass fraction")#, cex=2, , cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)
 points(dat2$HMDS.g, dat2$Nitromethane.m.f, col=dat2$Bijel, pch=1, cex=1.5)
-legend("bottomright", legend=c("Sample 1", "Sample 2", "Bijel", "Non-bijel"), col=c(rep("gray",2),"black", "red"), pch=c(16,1,16,16), ncol=2)
+legend("bottomright", legend=c("Bijel", "Non-bijel", "Bijel", "Non-bijel"), col=c("black", "red", "black", "red"), pch=c(16,16,1,1), ncol=2,title="Sample 1      Sample 2")
 dev.off()

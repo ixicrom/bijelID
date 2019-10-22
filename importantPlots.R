@@ -187,6 +187,7 @@ dev.off()
 
 
 #random sampling histogram
+set.seed(1234)
 bijelLabs <- replicate(1000, sample(c("y","n"), 135, replace=TRUE, prob=c(.68, .32)))
 bijelLabs[,1]
 
@@ -200,7 +201,7 @@ for(i in c(1:1000)){
 
 errorDF = data.frame(c(1:1000), data.frame(unlist(errors)))
 png('~/random_hist.png', res=300, height=1400, width=1600)
-ggplot(data=errorDF, aes(errorDF$unlist.errors.)) + geom_histogram() + geom_vline(aes(xintercept=0.1455189, linetype="Model error"), show.legend= TRUE, color="purple") + xlab("Error for randomly labelled samples") + ylab("Frequency") + theme(legend.title = element_blank())
+ggplot(data=errorDF, aes(errorDF$unlist.errors.)) + geom_histogram()  + scale_y_continuous(expand=c(0,0),limits=c(0,120))+ scale_x_continuous(expand=c(0,0),limits=c(0.1,0.45)) + geom_vline(aes(xintercept=0.1455189, linetype="Model error"), show.legend= TRUE, color="purple") + xlab("Error for randomly labelled samples") + ylab("Frequency") + theme(legend.title = element_blank())
 dev.off()
 
 
