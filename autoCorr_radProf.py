@@ -46,9 +46,10 @@ def listTif_nohidden(path):
 
 # autocorr_Dat = pd.DataFrame(index=exp_Dat.index, columns=['AutoTurn', 'AutoTurnPart'])
 
-imageDir='../../../../Volumes/PhD/BijelData/Batch_II_full_resolution_ED_images'
-workingDir='../../../../Volumes/PhD/BijelData/plotTest'
+imageDir='/Volumes/PhD/BijelData/new_Data'
+workingDir='../../../../Volumes/PhD/BijelData/acf_new'
 images=listTif_nohidden(imageDir)
+print(images)
 
 imChannel=int(input("Which image channel? (Index starts at 0) "))
 
@@ -65,14 +66,15 @@ for image in images:
     # scaleFactorA=2*math.pi/L
     # scaledXA=unscaledX*scaleFactorA
 
-    # outA = open(os.path.join(workingDir,'{}_autoCorr_channel{}.txt').format(image, imChannel),'w')
-    outR = open(os.path.join(workingDir,'{}_radProf_channel{}.txt').format(image, imChannel),'w')
+    outA = open(os.path.join(workingDir,'{}/{}_autoCorr_channel{}.txt').format(imChannel, image, imChannel),'w')
+    # outR = open(os.path.join(workingDir,'{}_radProf_channel{}.txt').format(image, imChannel),'w')
 
     for j in range(len(autoCorr)):
-        # bufA = '%s \n' %(str(autoCorr[j]))
-        # outA.write(bufA)
-        bufR = '%s \n' %(str(radProf[j]))
-        outR.write(bufR)
+        bufA = '%s \n' %(str(autoCorr[j]))
+        outA.write(bufA)
+        # bufR = '%s \n' %(str(radProf[j]))
+        # outR.write(bufR)
+    outA.close()
 
     # pl.plot(scaledXA, autoCorr)
     # pl.xlabel('q (micron)')
