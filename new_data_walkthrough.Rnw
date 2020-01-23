@@ -1,9 +1,114 @@
 \documentclass{article}
-
+\usepackage{graphicx, color, framed, alltt}
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 
-Hello
+When performing this analysis on a set of data, we start with the autocorrelation functions of the two channels in each image, and labels of whether these images are bijels or not.
+
+<<echo=F>>=
+exp_Data <- read.csv("/Volumes/PhD/BijelData/new_Data/Bijel_Data_Batch1.csv", na.strings = "?")
+exp_Data <- data.frame(Sample.Number=exp_Data$Sample.Number, Bijel=exp_Data$Bijel)
+exp_Data$Sample.Number <- as.character(exp_Data$Sample.Number)
+rownames(exp_Data) <- exp_Data$Sample.Number
+
+partFiles <- list.files("/Volumes/PhD/BijelData/acf_new/1", pattern=".txt", full.names = TRUE)
+partFileNames <- list.files("/Volumes/PhD/BijelData/acf_new/1", pattern=".txt")
+
+autoCorrPart <- do.call(cbind, lapply(partFiles, read.csv, header=FALSE))
+#colnames(autoCorrPart) <- partFileNames
+partFileID <- sapply(strsplit(partFileNames,"_"), `[`,1) #`[` is a function that takes the subset of x, the input to this function is x (strsplit...) and the element of x that I want, ie the 1st one
+colnames(autoCorrPart) <- partFileID
+
+autoCorrPart_transpose <- data.frame(t(autoCorrPart))
+exp_Data$Autocorrelation.Particle <- autoCorrPart_transpose[match(row.names(exp_Data),row.names(autoCorrPart_transpose)),c(1:256)]
+
+
+liqFiles <- list.files("/Volumes/PhD/BijelData/acf_new/0", pattern = ".txt", full.names = TRUE)
+liqFileNames <- list.files("/Volumes/PhD/BijelData/acf_new/0", pattern = ".txt")
+
+autoCorrLiq <- do.call(cbind, lapply(liqFiles, read.csv, header=FALSE))
+colnames(autoCorrLiq) <- liqFileNames
+
+liqFileID <- sapply(strsplit(liqFileNames,"_"), `[`,1)
+colnames(autoCorrLiq) <- liqFileID
+
+autoCorrLiq_transpose <- data.frame(t(autoCorrLiq))
+exp_Data$Autocorrelation.Liquid <- autoCorrLiq_transpose[match(row.names(exp_Data),row.names(autoCorrLiq_transpose)),c(1:256)]
+
+head(exp_Data[1:2])
+
+@
+
+We then need to turn these functions into a set of single-valued variables that describe features that may separate bijels from non-bijels, such as:
+
+\begin{itemize}
+\item The gradient of the particle channel autocorrelation function
+\end{itemize}
+
+
+<<>>=
+r <- c(1:256)
+num_points <- length(exp_Data$Sample.Number)
+y <- exp_Data$Autocorrelation.Particle[1:20]
+lineFits <- lapply(1:num_points, 
+                  function(n) lm(unlist(y[n,]) ~ r[1:20]))
+lineCoeffs <- lapply(lineFits, 
+                     function(m) m$coefficients)
+lineGradients <- lapply (1:num_points, 
+                          function(p) unname(lineCoeffs[[p]][2]))
+exp_Data$Particle.Gradients.20 <- unlist(lineGradients)
+
+
+library(ggplot2)
+ggplot(exp_Data,
+       aes(x=as.factor(Bijel), y=Particle.Gradients.20, fill=Bijel)) + 
+       geom_boxplot(alpha=0.3) + 
+       geom_jitter(alpha=0.5) + 
+       xlab("Bijel?") + ylab("Gradient") + 
+       ggtitle("Gradient of first 20 points of particle ACF") + 
+       theme(plot.title = element_text(hjust = 0.5))
+
+y2 <- exp_Data$Autocorrelation.Particle[1:10]
+lineFits2 <- lapply(1:num_points, 
+                    function(n) lm(unlist(y2[n,]) ~ r[1:10]))
+lineCoeffs2 <- lapply(lineFits2, 
+                      function(m) m$coefficients)
+lineGradients2 <- lapply (1:num_points, 
+                          function(p) unname(lineCoeffs2[[p]][2]))
+exp_Data$Particle.Gradients.10 <- unlist(lineGradients2)
+
+ggplot(exp_Data, 
+       aes(x=as.factor(Bijel), y=Particle.Gradients.10, fill=Bijel)) + 
+       geom_boxplot(alpha=0.3) + 
+       geom_jitter(alpha=0.5) + 
+       xlab("Bijel?") + ylab("Gradient") + 
+       ggtitle("Gradient of first 10 points of particle ACF") +
+       theme(plot.title = element_text(hjust = 0.5))
+
+
+@
+
+\begin{itemize}
+\item The position of the first turning point in the liquid channel autocorrelation function
+\end{itemize}
+
+<<>>=
+library(pastecs)
+liquidTurns <- lapply(1:num_points, 
+                      function(y) turnpoints(unlist(
+                        exp_Data$Autocorrelation.Liquid[y,])))
+firstTurn <- lapply(1:num_points, 
+                    function(y) liquidTurns[[y]]$tppos[1])
+exp_Data$Liquid.First.Turn <- unlist(firstTurn)
+
+ggplot(exp_Data, 
+       aes(x=as.factor(Bijel), y=Liquid.First.Turn, fill=Bijel)) + 
+       geom_boxplot(alpha=0.3) + 
+       geom_jitter(alpha=0.5) + 
+       xlab("Bijel?") + ylab("Position") + 
+       ggtitle("Position of first turning points of liquid ACF (pixels)")
+
+
+@
 
 
 \end{document}
