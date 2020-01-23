@@ -85,8 +85,8 @@ exp_Data$Particle.Gradients.20 <- unlist(lineGradients)
 exp_Data$Bijel.label <- ifelse(exp_Data$Bijel=="y", "Yes", "No")
 
 #20 point gradient plot
-png('~/bj_partGrad20.png', res=300, height=1200, width=1800)
-ggplot(exp_Data, aes(x=Bijel.label, y=Particle.Gradients.20, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 20 points of particle ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
+png('~/bj_partGrad20.png', res=300, height=1300, width=1800)
+ggplot(exp_Data, aes(x=Bijel.label, y=Particle.Gradients.20, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") +theme(legend.position="none", text = element_text(size=24), axis.title = element_text(size=21))
 dev.off()
 
 y2 <- exp_Data$Autocorrelation.Particle[1:10] * pixel_to_micron
@@ -96,8 +96,8 @@ lineGradients2 <- lapply (1:135, function(p) unname(lineCoeffs2[[p]][2]))
 exp_Data$Particle.Gradients.10 <- unlist(lineGradients2)
 
 #10 point gradient plot
-png('~/bj_partGrad10.png', res=300, height=1200, width=1800)
-ggplot(exp_Data, aes(x=Bijel.label, y=Particle.Gradients.10, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 10 points of particle ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
+png('~/bj_partGrad10.png', res=300, height=1300, width=1800)
+ggplot(exp_Data, aes(x=Bijel.label, y=Particle.Gradients.10, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") +theme(legend.position="none", text = element_text(size=24), axis.title = element_text(size=21))
 dev.off()
 
 
@@ -106,8 +106,8 @@ liquidTurns <- lapply(1:135, function(y) turnpoints(unlist(exp_Data$Autocorrelat
 firstTurn <- lapply(1:135, function(y) liquidTurns[[y]]$tppos[1])
 exp_Data$Liquid.First.Turn <- unlist(firstTurn) * pixel_to_micron
 
-png('~/bj_liqTurn.png', res=300, height=1200, width=1800)
-ggplot(exp_Data, aes(x=Bijel.label, y=Liquid.First.Turn, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Position (μm)") + ggtitle("Position of first turning point of liquid ACF")+theme(plot.title = element_text(hjust = 0.5), legend.position="none", text = element_text(size=16), axis.title = element_text(size=20))
+png('~/bj_liqTurn.png', res=300, height=1300, width=1800)
+ggplot(exp_Data, aes(x=Bijel.label, y=Liquid.First.Turn, fill=Bijel.label)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Position (μm)") +theme( legend.position="none", text = element_text(size=22), axis.title = element_text(size=21))
 dev.off()
 
 
@@ -201,7 +201,7 @@ for(i in c(1:1000)){
 
 errorDF = data.frame(c(1:1000), data.frame(unlist(errors)))
 png('~/random_hist.png', res=300, height=1400, width=1600)
-ggplot(data=errorDF, aes(errorDF$unlist.errors.)) + geom_histogram()  + scale_y_continuous(expand=c(0,0),limits=c(0,120))+ scale_x_continuous(expand=c(0,0),limits=c(0.1,0.45)) + geom_vline(aes(xintercept=0.1455189, linetype="Model error"), show.legend= TRUE, color="purple") + xlab("Error for randomly labelled samples") + ylab("Frequency") + theme(legend.title = element_blank())
+ggplot(data=errorDF, aes(errorDF$unlist.errors.)) + geom_histogram()  + scale_y_continuous(expand=c(0,0),limits=c(0,120))+ scale_x_continuous(expand=c(0,0),limits=c(0.1,0.45)) + geom_vline(aes(xintercept=0.1455189, linetype="Model error"), show.legend= TRUE, color="purple") + xlab("Error for randomly labelled samples") + ylab("Frequency") + theme(legend.title = element_blank(), text = element_text(size=18), axis.title = element_text(size=18))
 dev.off()
 
 
