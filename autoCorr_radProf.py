@@ -49,7 +49,6 @@ def listTif_nohidden(path):
 imageDir='/Volumes/PhD/BijelData/new_Data'
 workingDir='../../../../Volumes/PhD/BijelData/acf_new'
 images=listTif_nohidden(imageDir)
-print(images)
 
 imChannel=int(input("Which image channel? (Index starts at 0) "))
 
