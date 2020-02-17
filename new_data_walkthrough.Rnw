@@ -1,10 +1,15 @@
 \documentclass{article}
-\usepackage{graphicx, color, framed, alltt}
+\usepackage{graphicx, color, framed, alltt,fullpage}
 \begin{document}
 
+\setcounter{section}{5}
+\setcounter{page}{5}
+\section{Walkthrough with examples in R}
+
+\subsection{Getting the variables}
 When performing this analysis on a set of data, we start with the autocorrelation functions of the two channels in each image, and labels of whether these images are bijels or not.
 
-<<echo=F>>=
+<<echo=FALSE, warning=FALSE>>=
 exp_Data <- read.csv("/Volumes/PhD/BijelData/new_Data/Bijel_Data_Batch1.csv", na.strings = "?")
 exp_Data <- data.frame(Sample.Number=exp_Data$Sample.Number, Bijel=exp_Data$Bijel)
 exp_Data$Sample.Number <- as.character(exp_Data$Sample.Number)
@@ -34,7 +39,10 @@ colnames(autoCorrLiq) <- liqFileID
 autoCorrLiq_transpose <- data.frame(t(autoCorrLiq))
 exp_Data$Autocorrelation.Liquid <- autoCorrLiq_transpose[match(row.names(exp_Data),row.names(autoCorrLiq_transpose)),c(1:256)]
 
-head(exp_Data[1:2])
+exp_Data$ACF_1 <- rep("list(ACF_liquid)",31)
+exp_Data$ACF_2 <- rep("list(ACF_particle)",31)
+
+head(exp_Data[c(1,2,5,6)])
 
 @
 
@@ -45,7 +53,7 @@ We then need to turn these functions into a set of single-valued variables that 
 \end{itemize}
 
 
-<<>>=
+<<warning=FALSE>>=
 r <- c(1:256)
 num_points <- length(exp_Data$Sample.Number)
 y <- exp_Data$Autocorrelation.Particle[1:20]
@@ -60,7 +68,8 @@ exp_Data$Particle.Gradients.20 <- unlist(lineGradients)
 
 library(ggplot2)
 ggplot(exp_Data,
-       aes(x=as.factor(Bijel), y=Particle.Gradients.20, fill=Bijel)) + 
+       aes(x=as.factor(Bijel), y=Particle.Gradients.20, 
+           fill=Bijel)) + 
        geom_boxplot(alpha=0.3) + 
        geom_jitter(alpha=0.5) + 
        xlab("Bijel?") + ylab("Gradient") + 
@@ -77,7 +86,8 @@ lineGradients2 <- lapply (1:num_points,
 exp_Data$Particle.Gradients.10 <- unlist(lineGradients2)
 
 ggplot(exp_Data, 
-       aes(x=as.factor(Bijel), y=Particle.Gradients.10, fill=Bijel)) + 
+       aes(x=as.factor(Bijel), y=Particle.Gradients.10, 
+           fill=Bijel)) + 
        geom_boxplot(alpha=0.3) + 
        geom_jitter(alpha=0.5) + 
        xlab("Bijel?") + ylab("Gradient") + 
@@ -91,7 +101,7 @@ ggplot(exp_Data,
 \item The position of the first turning point in the liquid channel autocorrelation function
 \end{itemize}
 
-<<>>=
+<<warning=FALSE>>=
 library(pastecs)
 liquidTurns <- lapply(1:num_points, 
                       function(y) turnpoints(unlist(
@@ -101,14 +111,139 @@ firstTurn <- lapply(1:num_points,
 exp_Data$Liquid.First.Turn <- unlist(firstTurn)
 
 ggplot(exp_Data, 
-       aes(x=as.factor(Bijel), y=Liquid.First.Turn, fill=Bijel)) + 
+       aes(x=as.factor(Bijel), y=Liquid.First.Turn, 
+           fill=Bijel)) + 
        geom_boxplot(alpha=0.3) + 
        geom_jitter(alpha=0.5) + 
        xlab("Bijel?") + ylab("Position") + 
-       ggtitle("Position of first turning points of liquid ACF (pixels)")
-
+       ggtitle("Position of first turning points of liquid ACF")
 
 @
 
+We have generated box-and-jitter plots to see how the distribution of these variables is dependent on whether or not the sample is a bijel.
+
+Once we have these variables, we can apply a machine learning model to it in one of two ways: training the model on the data and testing via cross-validation, and testing a previously trained model on the new data.
+
+\subsection{Training a model and testing with cross-validation}
+Here we have chosen to train a k-nearest neighbours model with the three variables shown above, based on our experience with a previous set of data. This can be done very simply using the CARET package in R, which contains a number of widely-used machine learning algorithms as well as cross-validation capabilities. 
+
+<<warning=FALSE>>=
+library(caret)
+
+# set up the data
+attach(exp_Data)
+dat=data.frame(
+  Particle.Gradients.20, 
+  Particle.Gradients.10, 
+  Liquid.First.Turn, 
+  Bijel)
+
+# set a random number seed for reproducability
+set.seed(1234)
+
+# define the cross-validation parameters:
+# here we use 10-fold cross-validation and repeat it 3 times
+trCtrl <- trainControl(
+  method = "repeatedcv", 
+  number = 10,
+  repeats = 3)
+
+knnFit <- train(Bijel~., # Bijel = output, other variables = input
+                data=dat, # define the data
+                method="knn", # choose the algorithm
+                trControl=trCtrl, # cross-validation as above
+                tuneLength=10)
+print(knnFit)
+
+@
+
+%Cross-validation has been used to determine that the model performs best with $k=13$, and gives an error of around 16\%. This is similar to the result gained from the previous dataset, suggesting that the model is useful more generally than with just the system used to choose it.
+
+%To apply a different algorithm to the same data, it is a simple case of changing the algorithm choice in the \verbatim{train()} function and/or changing the input variables. 
+
+\subsection{Testing a trained model on new data}
+If we have already trained a model, we can use it to classify new data. This is how the algorithm can be used as a tool to classify unlabelled data.
+
+<<echo=FALSE, results='hide', warning=FALSE>>=
+train_Data <- read.csv("/Volumes/PhD/BijelData/Bijel_Data_Cleaner_ToRead.csv", na.strings = "?")
+train_Data$Sample.Number <- as.character(train_Data$Sample.Number)
+rownames(train_Data) <- train_Data$Sample.Number
+
+partFilesT <- list.files("/Volumes/PhD/BijelData/ParticleChannel/autoCorr", pattern=".txt", full.names = TRUE)
+partFileNamesT <- list.files("/Volumes/PhD/BijelData/ParticleChannel/autoCorr", pattern=".txt")
+
+autoCorrPartT <- do.call(cbind, lapply(partFilesT, read.csv, header=FALSE))
+#colnames(autoCorrPart) <- partFileNames
+
+partFileIDT <- sapply(strsplit(partFileNamesT,"_"), `[`,1) #`[` is a function that takes the subset of x, the input to this function is x (strsplit...) and the element of x that I want, ie the 1st one
+colnames(autoCorrPartT) <- partFileIDT
+
+autoCorrPart_transposeT <- data.frame(t(autoCorrPartT))
+train_Data$Autocorrelation.Particle <- autoCorrPart_transposeT[match(row.names(train_Data),row.names(autoCorrPart_transposeT)),c(1:256)]
+
+
+liqFilesT <- list.files("/Volumes/PhD/BijelData/LiquidChannel/autoCorr", pattern = ".txt", full.names = TRUE)
+liqFileNamesT <- list.files("/Volumes/PhD/BijelData/LiquidChannel/autoCorr", pattern = ".txt")
+
+autoCorrLiqT <- do.call(cbind, lapply(liqFilesT, read.csv, header=FALSE))
+colnames(autoCorrLiqT) <- liqFileNamesT
+
+liqFileIDT <- sapply(strsplit(liqFileNamesT,"_"), `[`,1)
+colnames(autoCorrLiqT) <- liqFileIDT
+
+autoCorrLiq_transposeT <- data.frame(t(autoCorrLiqT))
+train_Data$Autocorrelation.Liquid <- autoCorrLiq_transposeT[match(row.names(train_Data),row.names(autoCorrLiq_transposeT)),c(1:256)]
+
+#gradients of particle channel ACF
+r <- c(1:256)
+yT <- train_Data$Autocorrelation.Particle[1:20]
+lineFitsT <- lapply(1:135, function(n) lm(unlist(yT[n,]) ~ r[1:20]))
+lineCoeffsT <- lapply(lineFitsT, function(m) m$coefficients)
+lineGradientsT <- lapply (1:135, function(p) unname(lineCoeffsT[[p]][2]))
+train_Data$Particle.Gradients.20 <- unlist(lineGradientsT)
+
+y2T <- train_Data$Autocorrelation.Particle[1:10]
+lineFits2T <- lapply(1:135, function(n) lm(unlist(y2T[n,]) ~ r[1:10]))
+lineCoeffs2T <- lapply(lineFits2T, function(m) m$coefficients)
+lineGradients2T <- lapply (1:135, function(p) unname(lineCoeffs2T[[p]][2]))
+train_Data$Particle.Gradients.10 <- unlist(lineGradients2T)
+
+#turning point of liquid channel ACF
+liquidTurnsT <- lapply(1:135, function(y) turnpoints(unlist(train_Data$Autocorrelation.Liquid[y,])))
+firstTurnT <- lapply(1:135, function(y) liquidTurnsT[[y]]$tppos[1])
+train_Data$Liquid.First.Turn <- unlist(firstTurnT)
+
+
+datT=data.frame(Particle.Gradients.20=train_Data$Particle.Gradients.20, Particle.Gradients.10=train_Data$Particle.Gradients.10, Liquid.First.Turn=train_Data$Liquid.First.Turn, Bijel=train_Data$Bijel)
+set.seed(1234)
+trCtrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+
+set.seed(1234)
+trainedKNN <- train(Bijel~., data=datT, method="knn", trControl=trCtrl, tuneLength=30)
+
+@
+
+<<warning=FALSE>>=
+# predict whether the data points are bijels or not
+# to do this, we have to omit the bijel label from the data
+bijel_pred = predict(trainedKNN, newdata = dat[,-4])
+bijel_true = dat[,4]
+print(data.frame(bijel_pred, bijel_true=bijel_true))
+@
+
+We can now calculate the error rate, and also look at the results to see how many false positives, false negatives, etc. we have.
+
+<<warning=FALSE>>=
+
+success_count=length(bijel_pred[bijel_pred==bijel_true])
+success_rate=success_count/length(bijel_pred)
+paste0("Success rate: ",round(100*success_rate),"%")
+
+library(gmodels)
+CrossTable(x=bijel_pred, y=bijel_true, prop.chisq=FALSE)
+
+@
+
+In this case we can see that the error rate obtained from applying the old model to new data (39\%) is much higher than the one obtained by directly training the same type of model on the data in question (13\%). This is because the two datasets are from slightly different physical systems so although the same variables are useful, bijels are indicate at different values of these variables.
 
 \end{document}
