@@ -1,0 +1,483 @@
+---
+title: 'Particle channel: final story for thesis'
+output:
+  html_document:
+    df_print: paged
+---
+
+First plot the ACF/SF
+
+```{r}
+x=c(1:255)
+xSF=x*640.17/512
+L <- 640.17
+pixel_to_micron <- 2*pi/L
+
+#example SF plots (particle channel)
+bijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/52ii_Image23.tif_radProf_channel1.txt"))
+noBijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/54i_Image9.tif_radProf_channel1.txt"))
+png('~/Desktop/bijels2_graphs/SFexamples_part.png', res=300, width=1800, height=1200)
+plot(xSF, bijelSF_l, type="l", lwd=2, col="red", xlab = "q (1/μm)", ylab="Structure Factor", ylim=c(0.4,2.2),cex.axis=1.5,cex.lab=2,mgp=c(2.2,0.7,0))
+lines(xSF, noBijelSF_l, lwd=2)
+legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)#, cex=1.4)
+dev.off()
+
+#example ACF plots (particle channel)
+bijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/ParticleChannel/autoCorr/52ii_Image23.tif_autoCorr_channel1.txt"))
+noBijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/ParticleChannel/autoCorr/54i_Image9.tif_autoCorr_channel1.txt"))
+x=c(1:255)
+xACF=x*pixel_to_micron
+png('~/Desktop/bijels2_graphs/ACFexamples_part.png', res=300, width=1800, height=1200)
+plot(xACF, bijelACF_l, type="l", lwd=2, col="red", xlab = "r (μm)", ylab="Autocorrelation Function",cex.axis=1.5,cex.lab=2,mgp=c(2.2,0.7,0), ylim=c(0.9, 1))
+lines(xACF, noBijelACF_l, lwd=2)
+legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)
+dev.off()
+
+
+```
+
+
+
+Next read in all the data:
+
+```{r warning=FALSE}
+library(pastecs)
+
+
+corrFiles <- list.files("/Volumes/PhD/BijelData/ParticleChannel/autoCorr", pattern=".txt", full.names = TRUE)
+corrFileNames <- list.files("/Volumes/PhD/BijelData/ParticleChannel/autoCorr", pattern=".txt")
+
+autoCorr <- do.call(cbind, lapply(corrFiles, read.csv, header=FALSE))
+colnames(autoCorr) <- corrFileNames
+
+exp_Data <- read.csv("/Volumes/PhD/BijelData/Bijel_Data_Cleaner_ToRead.csv", na.strings = "?")
+exp_Data$Sample.Number <- as.character(exp_Data$Sample.Number)
+
+corrFileID <- sapply(strsplit(corrFileNames,"_"), `[`,1) #`[` is a function that takes the subset of x, the input to this function is x (strsplit...) and the element of x that I want, ie the 1st one
+colnames(autoCorr) <- corrFileID
+
+rownames(exp_Data) <- exp_Data$Sample.Number
+autoCorr_transpose <- data.frame(t(autoCorr))
+exp_Data$Autocorrelation <- autoCorr_transpose[match(row.names(exp_Data),row.names(autoCorr_transpose)),c(1:256)]
+
+
+radFiles <- list.files("/Volumes/PhD/BijelData/ParticleChannel/radProf", pattern=".txt", full.names = TRUE)
+radFileNames <- list.files("/Volumes/PhD/BijelData/ParticleChannel/radProf", pattern=".txt")
+
+radProf_data <- do.call(cbind, lapply(radFiles, read.csv, header=FALSE))
+colnames(radProf_data) <- radFileNames
+
+radFileID <- sapply(strsplit(radFileNames,"_"), `[`,1) #`[` is a function that takes the subset of x, the input to this function is x (strsplit...) and the element of x that I want, ie the 1st one
+colnames(radProf_data) <- radFileID
+
+rownames(exp_Data) <- exp_Data$Sample.Number
+radProf_data_transpose <- data.frame(t(radProf_data))
+exp_Data$Radial.Profile <- radProf_data_transpose[match(row.names(exp_Data),row.names(radProf_data_transpose)),c(1:256)]
+
+
+
+```
+
+
+Autocorrelation variables:
+* gradient at start (try 1-10 and 1-20)
+* x position of first turning point
+* y position of first turning point
+* number of turning points
+
+```{r}
+library(ggplot2)
+
+turningPoints <- lapply(1:135, function(y) turnpoints(unlist(exp_Data$Autocorrelation[y,])))
+firstTurn <- lapply(1:135, function(y) turningPoints[[y]]$tppos[1])
+exp_Data$Auto.First.Turn.Pos <- unlist(firstTurn)
+
+
+
+exp_Data$Auto.First.Turn.Val <- unlist(lapply(1:135, function(y) exp_Data$Autocorrelation[y,exp_Data$Auto.First.Turn[y]]))
+
+
+
+exp_Data$Auto.Num.Turns <- unlist(lapply(1:135, function(y) length(turningPoints[[y]]$tppos)))
+
+
+
+r <- c(1:256)
+y <- exp_Data$Autocorrelation[1:20]
+lineFits <- lapply(1:135, function(n) lm(unlist(y[n,]) ~ r[1:20]))
+lineCoeffs <- lapply(lineFits, function(m) m$coefficients)
+lineGradients <- lapply (1:135, function(p) unname(lineCoeffs[[p]][2]))
+exp_Data$Line.Gradients.20 <- unlist(lineGradients)
+
+
+
+y2 <- exp_Data$Autocorrelation[1:10]
+lineFits2 <- lapply(1:135, function(n) lm(unlist(y2[n,]) ~ r[1:10]))
+lineCoeffs2 <- lapply(lineFits2, function(m) m$coefficients)
+lineGradients2 <- lapply (1:135, function(p) unname(lineCoeffs2[[p]][2]))
+exp_Data$Line.Gradients.10 <- unlist(lineGradients2)
+
+
+
+```
+Plot them:
+```{r}
+head(exp_Data)
+png(file='/Users/s1101153/Desktop/bijels2_graphs/bjp_auto-first-turn-pos.png', width=600, height=400) 
+ggplot(exp_Data, aes(x=as.factor(Bijel), y=Auto.First.Turn.Pos, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Turning point position") + ggtitle("ACF Position of first turning point")+theme(legend.position="none", text = element_text(size=24), axis.title = element_text(size=21))
+dev.off()
+
+png(file='/Users/s1101153/Desktop/bijels2_graphs/bjp_auto-first-turn-val.png', width=600, height=400) 
+ggplot(exp_Data, aes(x=as.factor(Bijel), y=Auto.First.Turn.Val, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Turning point value") + ggtitle("Value of ACF at first turning point")+theme(legend.position="none", text = element_text(size=24), axis.title = element_text(size=21))
+dev.off()
+
+png(file='/Users/s1101153/Desktop/bijels2_graphs/bjp_auto-num-turns.png', width=600, height=400) 
+ggplot(exp_Data, aes(x=as.factor(Bijel), y=Auto.Num.Turns, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Number of turning points") + ggtitle("Number of turning points in ACF")+theme(legend.position="none", text = element_text(size=24), axis.title = element_text(size=21))
+dev.off()
+
+png(file='/Users/s1101153/Desktop/bijels2_graphs/bjp_line-gradients-20.png', width=600, height=400) 
+ggplot(exp_Data, aes(x=as.factor(Bijel), y=Line.Gradients.20, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 20 points of ACF")+theme(legend.position="none", text = element_text(size=24), axis.title = element_text(size=21))
+dev.off()
+
+png(file='/Users/s1101153/Desktop/bijels2_graphs/bjp_line-gradients-10.png', width=600, height=400) 
+ggplot(exp_Data, aes(x=as.factor(Bijel), y=Line.Gradients.10, fill=Bijel)) + geom_boxplot(alpha=0.3) + geom_jitter(alpha=0.5) + xlab("Bijel?") + ylab("Gradient") + ggtitle("Gradient of first 10 points of ACF")+theme(legend.position="none", text = element_text(size=24), axis.title = element_text(size=21))
+dev.off()
+
+```
+
+
+
+Now scale the data for accurate results:
+
+```{r}
+attach(exp_Data)
+dat=data.frame(Line.Gradients.10, Line.Gradients.20, Auto.Num.Turns, Auto.First.Turn.Val, Auto.First.Turn.Pos)
+
+means = unlist(lapply(1:5, function(n) mean(unlist(dat[n][]))))
+
+#datScaled = data.frame(lapply(1:5, function(n) dat[n][]*means[1]/means[n]*1000))
+means = unlist(lapply(1:5, function(n) mean(unlist(dat[n]))))
+stdevs = unlist(lapply(1:5, function(n) sd(unlist(dat[n]))))
+datScaled = data.frame(lapply(1:5, function(n) (dat[n]-means[n])/stdevs[n]))
+datScaled$Bijel = Bijel
+head(datScaled)
+
+
+
+```
+
+
+Now run decision tree
+```{r}
+library(caret)
+library(rpart.plot)
+
+
+set.seed(1234)
+
+trCtrl <- trainControl(method="repeatedcv", number=10, repeats = 3)
+dtreeFit <- train(Bijel ~., data=datScaled, method="rpart", parms=list(split="gini"), trControl=trCtrl, tuneLength=10)
+
+dtreeFit
+prp(dtreeFit$finalModel, box.palette = "Reds", tweak=1.2, extra=101)
+
+# table(Predict=dtreeFit$pred(datScaled), true=Bijel)
+
+```
+Now knn:
+```{r}
+
+set.seed(1234)
+knn_fit <- train(Bijel ~., data=datScaled, method="knn", trControl=trCtrl, tuneLength=42)
+
+knn_fit
+
+```
+
+
+
+Logistic regression:
+```{r}
+
+set.seed(1234)
+logRegFit <- train(Bijel ~., data=datScaled, method="glm", trControl=trCtrl)
+logRegFit
+
+```
+
+SVM:
+```{r}
+
+set.seed(1234)
+svmFit <- train(Bijel~., data=datScaled, method="svmLinear", trControl=trCtrl, tuneLength=10)
+svmFit
+
+```
+
+
+Compare all the errors:
+```{r}
+
+error_dtree = 1-dtreeFit$results[row.names(knn_fit$bestTune),]$Accuracy
+paste0('Decision tree error: ', error_dtree)
+
+error_knn = 1-knn_fit$results[row.names(knn_fit$bestTune),]$Accuracy
+paste0('KNN error: ', error_knn)
+
+error_logreg = 1-logRegFit$results$Accuracy
+paste0('Logistic regression error: ', error_logreg)
+
+error_svm = 1-svmFit$results$Accuracy
+paste0('SVM error: ', error_svm)
+
+```
+
+
+Logistic regression has best performance and also has benefits over SVM, the next best option. Look in detail at this result.
+```{r}
+logRegFit$finalModel$coefficients
+```
+
+
+Calculate the log odds too
+
+```{r}
+
+exp(logRegFit$finalModel$coefficients)
+
+```
+
+
+Calculate effect of removing each variable
+```{r}
+
+errors <- rep(NA, 5)
+set.seed(1234)
+logRegFit5 <- train(Bijel ~., data=datScaled, method="glm", trControl=trCtrl)
+errors[1]=1-logRegFit5$results[row.names(logRegFit5$bestTune),]$Accuracy
+
+
+logRegFit4 <- train(Bijel ~., data=datScaled[c('Bijel', 'Line.Gradients.10', 'Line.Gradients.20', 'Auto.Num.Turns', "Auto.First.Turn.Pos")], method="glm", trControl=trCtrl)
+errors[2]=1-logRegFit4$results[row.names(logRegFit4$bestTune),]$Accuracy
+
+logRegFit3 <- train(Bijel ~., data=datScaled[c('Bijel', 'Line.Gradients.10', 'Line.Gradients.20', 'Auto.Num.Turns')], method="glm", trControl=trCtrl)
+errors[3]=1-logRegFit3$results[row.names(logRegFit3$bestTune),]$Accuracy
+
+
+logRegFit2 <- train(Bijel ~., data=datScaled[c('Bijel', 'Line.Gradients.10', 'Line.Gradients.20')], method="glm", trControl=trCtrl)
+errors[4]=1-logRegFit2$results[row.names(logRegFit2$bestTune),]$Accuracy
+
+
+logRegFit1 <- train(Bijel ~., data=datScaled[c('Bijel', 'Line.Gradients.10')], method="glm", trControl=trCtrl)
+errors[5]=1-logRegFit1$results[row.names(logRegFit1$bestTune),]$Accuracy
+
+```
+
+
+Plot this:
+```{r}
+errors
+png(file='/Users/s1101153/Desktop/bijels2_graphs/error_vs_num_vars.png', width=600, height=400) 
+plot(c(5,4,3,2,1), errors, xlab="Number of variables in model", ylab="Classification error", pch=19)
+dev.off()
+```
+
+What's the error if I just use the other gradient variable?
+
+```{r}
+logRegFit1Alt <- train(Bijel ~., data=datScaled[c('Bijel', 'Line.Gradients.20')], method="glm", trControl=trCtrl)
+err=1-logRegFit1Alt$results[row.names(logRegFit1Alt$bestTune),]$Accuracy
+err
+```
+That's similar, good to know.
+
+
+
+Plot the predictions of the best model (using the unscaled version of the variable for the plot axes):
+
+```{r}
+#attach(exp_Data)
+final_model = logRegFit2
+pred = predict(final_model, data=datScaled)
+final_model$finalModel$coefficients
+
+
+png(file='/Users/s1101153/Desktop/bijels2_graphs/particle_result.png', width=600, height=400) 
+plot(Line.Gradients.10, Line.Gradients.20, col=Bijel, pch=16)
+points(Line.Gradients.10, Line.Gradients.20, col=pred, pch=1, cex=1.5)
+legend("topright", legend=c("Bijel", "Non-bijel", "Pred. bijel", "Pred. non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"))
+dev.off()
+```
+
+
+Table of the results:
+
+```{r}
+table(Predict=pred, true=Bijel)
+```
+
+
+# Applying the final model to new data
+## First try brand new, unrelated data
+First read in the new files:
+```{r}
+corrFilesNew <- list.files("/Volumes/PhD/BijelData/acf_new/1", pattern=".txt", full.names = TRUE)
+corrFileNamesNew <- list.files("/Volumes/PhD/BijelData/acf_new/1", pattern=".txt")
+
+autoCorrNew <- do.call(cbind, lapply(corrFilesNew, read.csv, header=FALSE))
+colnames(autoCorrNew) <- corrFileNamesNew
+
+
+exp_DataNew <- read.csv("/Volumes/PhD/BijelData/new_Data/Bijel_Data_Batch1.csv", na.strings = "?")
+exp_DataNew$Sample.Number <- as.character(exp_DataNew$Sample.Number)
+
+corrFileIDNew <- sapply(strsplit(corrFileNamesNew,"_"), `[`,1) #`[` is a function that takes the subset of x, the input to this function is x (strsplit...) and the element of x that I want, ie the 1st one
+colnames(autoCorrNew) <- corrFileIDNew
+
+rownames(exp_DataNew) <- exp_DataNew$Sample.Number
+autoCorrNew_transpose <- data.frame(t(autoCorrNew))
+exp_DataNew$Autocorrelation <- autoCorrNew_transpose[match(row.names(exp_DataNew),row.names(autoCorrNew_transpose)),c(1:256)]
+
+num_points <- dim(exp_DataNew)[1]
+
+
+r <- c(1:256)
+y <- exp_DataNew$Autocorrelation[1:20]
+lineFits <- lapply(1:num_points, function(n) lm(unlist(y[n,]) ~ r[1:20]))
+lineCoeffs <- lapply(lineFits, function(m) m$coefficients)
+lineGradients <- lapply (1:num_points, function(p) unname(lineCoeffs[[p]][2]))
+exp_DataNew$Line.Gradients.20 <- unlist(lineGradients)
+
+
+y2 <- exp_DataNew$Autocorrelation[1:10]
+lineFits2 <- lapply(1:num_points, function(n) lm(unlist(y2[n,]) ~ r[1:10]))
+lineCoeffs2 <- lapply(lineFits2, function(m) m$coefficients)
+lineGradients2 <- lapply (1:num_points, function(p) unname(lineCoeffs2[[p]][2]))
+exp_DataNew$Line.Gradients.10 <- unlist(lineGradients2)
+
+
+new_for_model <- exp_DataNew[c(18,19)]
+new_for_model = data.frame(lapply(1:2, function(n) (new_for_model[n]-means[n])/stdevs[n]))
+new_for_model$Bijel = exp_DataNew$Bijel
+head(new_for_model)
+```
+
+
+Now apply the final model to the new data:
+```{r}
+bijel_pred = predict(final_model, newdata = new_for_model)
+bijel_true = new_for_model$Bijel
+
+success_count=length(bijel_pred[bijel_pred==bijel_true])
+success_rate=success_count/length(bijel_pred)
+paste0("Success rate: ",100*success_rate,"%")
+
+null_rate = length(bijel_true[bijel_true=='y'])/length(bijel_pred)
+
+
+paste0("Null rate: ", 100*null_rate, "%")
+
+table(Predict=bijel_pred, true=bijel_true)
+print(data.frame(bijel_pred, bijel_true=bijel_true))
+```
+
+
+##Now repeat that with data more similar to the data the model was trained on:
+
+First read in the new files (from sameSample_analysis.R in Git folder):
+```{r}
+bijelFilesP <- list.files("/Volumes/PhD/BijelData/sample52ii/particle", pattern=".txt", full.names = TRUE)
+bijelFileNames <- list.files("/Volumes/PhD/BijelData/sample52ii/particle", pattern=".txt")
+
+
+failFilesP <- list.files("/Volumes/PhD/BijelData/sample54i/particle", pattern=".txt", full.names = TRUE)
+failFileNames <- list.files("/Volumes/PhD/BijelData/sample54i/particle", pattern=".txt")
+
+autoCorrBP <- do.call(cbind, lapply(bijelFilesP, read.csv, header=FALSE))
+bijelID <- sapply(strsplit(bijelFileNames,"_"), `[`,1)
+
+
+bijelLabs <- rep_len("y", length(bijelFileNames))
+bDat <- data.frame(Bijel=bijelLabs)
+rownames(bDat) <- bijelID
+bDat$Part <- data.frame(t(autoCorrBP))
+head(bDat)
+
+
+autoCorrNBP <- do.call(cbind, lapply(failFilesP, read.csv, header=FALSE))
+failID <- sapply(strsplit(failFileNames,"_"), `[`,1)
+#colnames(autoCorrNBL) <- colnames(autoCorrNBP) <- failID
+
+failLabs <- rep_len("n", length(failFileNames))
+nbDat <- data.frame(Bijel=failLabs)
+nbDat$Part <- data.frame(t(autoCorrNBP))
+
+num_pointsB <- dim(bDat)[1]
+num_pointsNB <- dim(nbDat)[1]
+r <- c(1:256)
+y <- bDat$Part[1:20]
+lineFits <- lapply(1:num_pointsB, function(n) lm(unlist(y[n,]) ~ r[1:20]))
+lineCoeffs <- lapply(lineFits, function(m) m$coefficients)
+lineGradients <- lapply (1:num_pointsB, function(p) unname(lineCoeffs[[p]][2]))
+bDat$Line.Gradients.20 <- unlist(lineGradients)
+
+y2 <- bDat$Part[1:10]
+lineFits2 <- lapply(1:num_pointsB, function(n) lm(unlist(y2[n,]) ~ r[1:10]))
+lineCoeffs2 <- lapply(lineFits2, function(m) m$coefficients)
+lineGradients2 <- lapply (1:num_pointsB, function(p) unname(lineCoeffs2[[p]][2]))
+bDat$Line.Gradients.10 <- unlist(lineGradients2)
+
+
+r <- c(1:256)
+y <- nbDat$Part[1:20]
+lineFits <- lapply(1:num_pointsNB, function(n) lm(unlist(y[n,]) ~ r[1:20]))
+lineCoeffs <- lapply(lineFits, function(m) m$coefficients)
+lineGradients <- lapply (1:num_pointsNB, function(p) unname(lineCoeffs[[p]][2]))
+nbDat$Line.Gradients.20 <- unlist(lineGradients)
+
+y2 <- nbDat$Part[1:10]
+lineFits2 <- lapply(1:num_pointsNB, function(n) lm(unlist(y2[n,]) ~ r[1:10]))
+lineCoeffs2 <- lapply(lineFits2, function(m) m$coefficients)
+lineGradients2 <- lapply (1:num_pointsNB, function(p) unname(lineCoeffs2[[p]][2]))
+nbDat$Line.Gradients.10 <- unlist(lineGradients2)
+
+detach(exp_Data)
+attach(bDat)
+testDat1 <- data.frame(Bijel, Line.Gradients.10, Line.Gradients.20)
+
+detach(bDat)
+attach(nbDat)
+testDat2 <- data.frame(Bijel, Line.Gradients.10, Line.Gradients.20)
+
+testDat <- rbind(testDat1, testDat2)
+testDat
+testDat_for_model = testDat[-1]
+testDat_for_model = data.frame(lapply(1:2, function(n) (testDat_for_model[n]-means[n])/stdevs[n]))
+testDat_for_model$Bijel = testDat$Bijel
+testDat_for_model
+
+```
+
+
+Now apply the final model to the new data:
+```{r}
+bijel_pred = predict(final_model, newdata = testDat_for_model)
+bijel_true = testDat$Bijel
+
+
+length(bijel_pred)
+length(bijel_true)
+
+success_count=length(bijel_pred[bijel_pred==bijel_true])
+success_count
+success_rate=success_count/length(bijel_pred)
+paste0("Success rate: ",100*success_rate,"%")
+
+null_rate = 1-(length(bijel_true[bijel_true=='y'])/length(bijel_pred))
+
+
+paste0("Null rate: ", 100*null_rate, "%")
+
+table(Predict=bijel_pred, true=bijel_true)
+#print(data.frame(bijel_pred, bijel_true=bijel_true))
+```
