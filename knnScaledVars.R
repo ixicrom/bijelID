@@ -88,6 +88,7 @@ datScaled$Bijel = Bijel
 head(datScaled)
 
 set.seed(1234)
+trCtrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
 knn_fit_scaled <- train(Bijel ~., data=datScaled, method="knn", trControl=trCtrl, tuneLength=42)
 error=1-knn_fit_scaled$results[row.names(knn_fit_scaled$bestTune),]$Accuracy
 error
