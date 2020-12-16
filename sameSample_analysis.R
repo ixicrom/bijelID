@@ -52,7 +52,14 @@ exp_Data$Liquid.First.Turn <- unlist(firstTurn)
 
 
 attach(exp_Data)
-fitDat=data.frame(Particle.Gradients.20, Particle.Gradients.10, Liquid.First.Turn, Bijel)
+dat=data.frame(Particle.Gradients.20, Particle.Gradients.10, Liquid.First.Turn, Bijel)
+means = unlist(lapply(1:3, function(n) mean(unlist(dat[n]))))
+stdevs = unlist(lapply(1:3, function(n) sd(unlist(dat[n]))))
+fitDat = data.frame(lapply(1:3, function(n) (dat[n]-means[n])/stdevs[n]))
+fitDat$Bijel = Bijel
+summary(fitDat)
+
+
 
 set.seed(1234)
 trCtrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
@@ -60,7 +67,7 @@ trCtrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
 set.seed(1234)
 finalFit <- train(Bijel~., data=fitDat, method="glm", trControl=trCtrl)
 
-
+table(Predict=predict(finalFit), true=fitDat$Bijel)
 
 
 # _____________________Testing the model on same sample data__________________________________________
@@ -159,11 +166,37 @@ firstTurnNB <- lapply(1:11, function(m) lTurnsNB[[m]]$tppos[1])
 nbDat$Liquid.First.Turn <- unlist(firstTurnNB)
 
 attach(bDat)
-testDat1 <- data.frame(Particle.Gradients.10, Particle.Gradients.20, Liquid.First.Turn)
+testDat1 <- data.frame(Particle.Gradients.20, Particle.Gradients.10, Liquid.First.Turn, Bijel)
 
 attach(nbDat)
-testDat2 <- data.frame(Particle.Gradients.10, Particle.Gradients.20, Liquid.First.Turn)
+testDat2 <- data.frame(Particle.Gradients.20, Particle.Gradients.10, Liquid.First.Turn, Bijel)
 
 testDat <- rbind(testDat1, testDat2)
-predict(finalFit, newdata = testDat)
+#!!!!!!!!!!
+testDat_scaled <- data.frame(lapply(1:3, function(n) (testDat[n]-means[n])/stdevs[n]))
+testDat_scaled$Bijel <- testDat$Bijel
+predict(finalFit, newdata = testDat_scaled)
+
+
+
+
+
+bijel_pred = predict(finalFit, newdata = testDat_scaled)
+bijel_true = testDat_scaled$Bijel
+
+
+length(bijel_pred)
+length(bijel_true)
+
+success_count=length(bijel_pred[bijel_pred==bijel_true])
+success_count
+success_rate=success_count/length(bijel_pred)
+paste0("Success rate: ",round(100*success_rate),"%")
+
+null_rate = 1-(length(bijel_true[bijel_true=='y'])/length(bijel_pred))
+
+
+paste0("Null rate: ", round(100*null_rate), "%")
+
+table(Predict=bijel_pred, true=bijel_true)
 
