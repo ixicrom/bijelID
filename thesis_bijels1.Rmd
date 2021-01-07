@@ -139,9 +139,11 @@ dev.off()
 Plot examples of the ACF and SF too:
 ```{r}
 x=c(1:255)
-xSF=x*640.17/512
+xACF=x*640.17/512
 L <- 640.17
 pixel_to_micron <- 2*pi/L
+xSF=x*pixel_to_micron
+
 #example SF plots (liquid channel)
 bijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/52ii_Image23.tif_radProf_channel0.txt"))
 noBijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/54i_Image9.tif_radProf_channel0.txt"))
@@ -154,8 +156,6 @@ dev.off()
 #example ACF plots (liquid channel)
 bijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/LiquidChannel/autoCorr/52ii_Image23.tif_autoCorr_channel0.txt"))
 noBijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/LiquidChannel/autoCorr/54i_Image9.tif_autoCorr_channel0.txt"))
-x=c(1:255)
-xACF=x*pixel_to_micron
 png('~/Desktop/bijels1_graphs/ACFexamples_liq.png', res=300, width=1800, height=1200)
 plot(xACF, bijelACF_l, type="l", lwd=2, col="red", xlab = "r (μm)", ylab="Autocorrelation Function",cex.axis=1.5,cex.lab=2,mgp=c(2.2,0.7,0))
 lines(xACF, noBijelACF_l, lwd=2)

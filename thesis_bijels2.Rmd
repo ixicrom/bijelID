@@ -9,9 +9,10 @@ First plot the ACF/SF
 
 ```{r}
 x=c(1:255)
-xSF=x*640.17/512
+xACF=x*640.17/512
 L <- 640.17
 pixel_to_micron <- 2*pi/L
+xSF=x*pixel_to_micron
 
 #example SF plots (particle channel)
 bijelSF_l <- unlist(read.csv("/Volumes/PhD/BijelData/SF_bothChannels/52ii_Image23.tif_radProf_channel1.txt"))
@@ -25,8 +26,6 @@ dev.off()
 #example ACF plots (particle channel)
 bijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/ParticleChannel/autoCorr/52ii_Image23.tif_autoCorr_channel1.txt"))
 noBijelACF_l <- unlist(read.csv("/Volumes/PhD/BijelData/ParticleChannel/autoCorr/54i_Image9.tif_autoCorr_channel1.txt"))
-x=c(1:255)
-xACF=x*pixel_to_micron
 png('~/Desktop/bijels2_graphs/ACFexamples_part.png', res=300, width=1800, height=1200)
 plot(xACF, bijelACF_l, type="l", lwd=2, col="red", xlab = "r (μm)", ylab="Autocorrelation Function",cex.axis=1.5,cex.lab=2,mgp=c(2.2,0.7,0), ylim=c(0.9, 1))
 lines(xACF, noBijelACF_l, lwd=2)
@@ -300,12 +299,21 @@ Plot the predictions of the best model (using the unscaled version of the variab
 final_model = logRegFit2
 pred = predict(final_model, data=datScaled)
 final_model$finalModel$coefficients
-
-
+b0=final_model$finalModel$coefficients['(Intercept)']
+b1=final_model$finalModel$coefficients['Line.Gradients.10']
+b2=final_model$finalModel$coefficients['Line.Gradients.20']
+lhs=log(1)
+m=-1.*(b1/b2)
+c=(lhs-b0)/b2
+c_low = (log(25/75)-b0)/b2
+c_high=(log(75/25)-b0)/b2
 png(file='/Users/s1101153/Desktop/bijels2_graphs/particle_result.png', width=600, height=400) 
-plot(Line.Gradients.10, Line.Gradients.20, col=Bijel, pch=16)
-points(Line.Gradients.10, Line.Gradients.20, col=pred, pch=1, cex=1.5)
-legend("topright", legend=c("Bijel", "Non-bijel", "Pred. bijel", "Pred. non-bijel"), pch=c(16,16,1,1), col=c("red", "black", "red", "black"))
+plot(datScaled$Line.Gradients.10, datScaled$Line.Gradients.20, col=datScaled$Bijel, pch=16, xlab='Gradient of first 10 points', ylab = 'Gradient of first 20 points')
+points(datScaled$Line.Gradients.10, datScaled$Line.Gradients.20, col=pred, pch=1, cex=1.5)
+abline(a=c, b=m, col='blue', lty=2)
+#abline(a=c_low, b=m, col='blue', lty=3)
+#abline(a=c_high, b=m, col='blue', lty=3)
+legend("topleft", legend=c("Bijel", "Non-bijel", "Pred. bijel", "Pred. non-bijel", "Decision boundary"), pch=c(16,16,1,1,NA), lty=c(NA,NA,NA,NA,2), col=c("red", "black", "red", "black","blue"))
 dev.off()
 ```
 
@@ -481,3 +489,47 @@ paste0("Null rate: ", 100*null_rate, "%")
 table(Predict=bijel_pred, true=bijel_true)
 #print(data.frame(bijel_pred, bijel_true=bijel_true))
 ```
+
+
+Finally, do a ROC curve and a histogram of random labels. First the histogram:
+
+```{r}
+# random labelling histogram
+true_error = 1-(final_model$results[row.names(final_model$bestTune),]$Accuracy)
+num_samps = 1000
+set.seed(1234)
+bijelLabs <- replicate(num_samps, sample(c("y","n"), 135, replace=TRUE, prob=c(.68, .32)))
+bijelLabs[,1]
+
+errors <- vector("list", num_samps)
+for(i in c(1:num_samps)){
+ dat=data.frame(datScaled$Line.Gradients.20, datScaled$Line.Gradients.10, y=bijelLabs[,i])
+ set.seed(1234)
+ fit <- train(y ~., data=dat, method="glm", trControl=trCtrl)
+ errors[i] <- 1-fit$results$Accuracy
+}
+
+errorDF = data.frame(c(1:num_samps), data.frame(unlist(errors)))
+png('/Users/s1101153/Desktop/bijels2_graphs/random_hist_part.png', res=300, height=1400, width=1600)
+ggplot(data=errorDF, aes(errorDF$unlist.errors.)) + geom_histogram()  + scale_y_continuous(expand=c(0,0),limits=c(0,120))+ scale_x_continuous(expand=c(0,0),limits=c(0.1,0.45)) + geom_vline(aes(xintercept=true_error, linetype="Model error"), show.legend= TRUE, color="purple") + xlab("Error for randomly labelled samples") + ylab("Frequency") + theme(legend.title = element_blank(), text = element_text(size=18), axis.title = element_text(size=18))
+dev.off()
+```
+
+ROC (https://cran.r-project.org/web/packages/plotROC/vignettes/examples.html):
+```{r}
+resultDat <- data.frame(Bijel=datScaled$Bijel, partPred=predict(final_model, type="prob")[[2]])
+resultDat$Bijel
+
+
+library(plotROC)
+basicplot <- ggplot(resultDat, aes(d=Bijel, m=partPred)) + geom_roc() 
+
+png('~/Desktop/bijels2_graphs/ROC_part.png', res=300, width=1800, height=1200)
+basicplot + xlab('False positive fraction') + ylab('True positive fraction') + annotate("text", x = .75, y = .25,label = paste("AUC =", round(calc_auc(basicplot)$AUC, 2))) #+ ggtitle('ROC curve for particle channel model')
+dev.off()
+
+```
+
+
+
+
