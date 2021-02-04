@@ -172,8 +172,10 @@ attach(exp_Data)
 dat=data.frame(Auto.Num.Turns, Auto.Peak.Depth, Rad.Val.30, Rad.Line.Gradients, Max.Rad.Jump, Max.Rad.Jump.X, Auto.First.Turn)
 
 means = unlist(lapply(1:7, function(n) mean(unlist(dat[n][]))))
+stdevs = unlist(lapply(1:7, function(n) sd(unlist(dat[n][]))))
 
-datScaled = data.frame(lapply(1:7, function(n) dat[n][]*means[1]/means[n]))
+datScaled = data.frame(lapply(1:7, function(n) dat[n]*means[1]/means[n]))
+#datScaled = data.frame(lapply(1:7, function(n) (dat[n]-means[n])/stdevs[n]))
 datScaled$Bijel = Bijel
 head(datScaled)
 
@@ -429,7 +431,7 @@ dev.off()
 # Final model 
 
 ```{r}
-final_model <- train(Bijel ~., data=datImprovedSmall[c("Bijel", "Auto.First.Turn")], method="knn", trControl=trCtrl, tuneLength=42)
+final_model <- train(Bijel ~., data=datImprovedSmall[c("Bijel", "Auto.First.Turn")], method="knn", trControl=trCtrl, tuneGrid=expand.grid(k=c(1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75)))
 errors[5]=1-knn_fit_turn1$results[row.names(knn_fit_turn1$bestTune),]$Accuracy
 png(file='/Users/s1101153/Desktop/bijels1_graphs/liquid_result_k_graph.png', width=600, height=400)
 plot(final_model)
@@ -475,6 +477,8 @@ exp_DataNew$Auto.First.Turn <- unlist(firstTurnNew)
 
 
 new_for_model <- exp_DataNew[c(16,19)]
+new_for_model$Auto.First.Turn = new_for_model$Auto.First.Turn*means[1]/means[7]
+#new_for_model$Auto.First.Turn = (new_for_model$Auto.First.Turn-means[7])/stdevs[7]
 
 ```
 
@@ -545,7 +549,9 @@ attach(nbDat)
 testDat2 <- data.frame(Bijel, Auto.First.Turn)
 
 testDat <- rbind(testDat1, testDat2)
-testDat
+
+#testDat$Auto.First.Turn = (testDat$Auto.First.Turn-means[7])/stdevs[7]
+testDat$Auto.First.Turn = testDat$Auto.First.Turn*means[1]/means[7]
 ```
 
 
