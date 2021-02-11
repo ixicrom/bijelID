@@ -78,6 +78,43 @@ exp_Data$Radial.Profile <- radProf_data_transpose[match(row.names(exp_Data),row.
 ```
 
 
+Plot all the SF and ACF to show how much they vary:
+```{r}
+library(scales)
+x=c(1:256)
+xACF=x*640.17/512
+L <- 640.17
+pixel_to_micron <- 2*pi/L
+xSF=x*pixel_to_micron
+#plot(xSF, xSF, xlim=c(0,50), ylim=c(0.5,1), type="n") #basically plotting axes
+
+png('~/Desktop/bijels2_graphs/SFall_part.png', res=300, width=1800, height=1200)
+plot(xSF, exp_Data[1, "Radial.Profile"], type="l", lwd=2, ylim=c(0, 4), col=alpha("black", 0.2), xlab = "q (1/μm)", ylab="Structure Factor",cex.axis=1.5,cex.lab=2,mgp=c(2.2,0.7,0))
+for(i in 2:nrow(exp_Data)){
+  y <- exp_Data[i, "Radial.Profile"]
+  bijelCol=NULL
+  if(exp_Data$Bijel[i]=="y"){bijelCol="black"}
+  else{bijelCol="red"}
+  points(xSF, y, col=alpha(bijelCol, 0.3), type="l", lwd=2)
+}
+legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)
+dev.off()
+
+png('~/Desktop/bijels2_graphs/ACFall_part.png', res=300, width=1800, height=1200)
+plot(xACF, exp_Data[1, "Autocorrelation"], type="l", lwd=2, ylim=c(0.7, 1), col=alpha("black", 0.2), xlab = "r (μm)", ylab="Autocorrelation function",cex.axis=1.5,cex.lab=2,mgp=c(2.2,0.7,0))
+for(i in 2:nrow(exp_Data)){
+  y <- exp_Data[i, "Autocorrelation"]
+  bijelCol=NULL
+  if(exp_Data$Bijel[i]=="y"){bijelCol="black"}
+  else{bijelCol="red"}
+  points(xACF, y, col=alpha(bijelCol, 0.2), type="l", lwd=2)
+}
+legend("topright", legend = c("Bijel", "Non-bijel"), col=c("red", "black"), lwd=2)
+dev.off()
+```
+
+
+
 Autocorrelation variables:
 * gradient at start (try 1-10 and 1-20)
 * x position of first turning point

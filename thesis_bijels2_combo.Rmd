@@ -194,10 +194,13 @@ errors_knn[7]=1-logRegFit1Part20$results[row.names(logRegFit1Part20$bestTune),]$
 Plot this:
 ```{r }
 errors_logreg
-png(file='/Users/s1101153/Desktop/bijels2_graphs/error_vs_num_vars_combo.png', width=600, height=400) 
+
+png(file='/Users/s1101153/Desktop/bijels2_graphs/error_vs_num_vars_combo.png', width=1200, height=800, res=200) 
 plot(c(3,2,2,2,1,1,1), errors_logreg, xlab="Number of variables in model", ylab="Classification error", pch=1)
 points(c(3,2,2,2,1,1,1), errors_knn, xlab="Number of variables in model", ylab="Classification error", pch=1, col=2)
 legend("topright", legend=c("KNN", "Logistic regression"), pch=19, col=c("red", "black"))
+text(x=1.40, y=0.163, 'Liquid channel model', col='gray50')
+text(x=2.425, y=0.189, 'Particle channel model', col='gray50')
 dev.off()
 ```
 
